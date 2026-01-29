@@ -1,0 +1,15 @@
+Empty tables (ready to use):
+
+buyers_buyerorder — 0 orders (for buyer purchases)
+cooks_cookorder — 0 cook orders
+cooks_pickupslot — 0 pickup slots
+buyers_buyerreview — 0 reviews
+cooks_cookreview — 0 cook reviews
+ml_engine_demandforecast — 0 demand forecasts
+payments_payment — 0 payments
+Django system tables (auto-created):
+
+auth_permission, auth_group — Django authentication
+django_admin_log — Admin activity log
+django_content_type — Django model metadata
+django_session — Session management

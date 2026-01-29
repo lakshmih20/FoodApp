@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Meal - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Delete Meal</h4>
+            </div>
+            <div class="card-body">
+                <p>Are you sure you want to delete <strong>{{ meal.name }}</strong>?</p>
+                <p class="text-danger">This action cannot be undone.</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    <a href="{% url 'cooks:meals' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+
+
+

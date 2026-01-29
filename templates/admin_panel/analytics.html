@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-graph-up"></i> Platform Analytics</h2>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Revenue Trends (Last 30 Days)</h5>
+    </div>
+    <div class="card-body">
+        <canvas id="revenueChart"></canvas>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Order Trends (Last 30 Days)</h5>
+    </div>
+    <div class="card-body">
+        <canvas id="orderChart"></canvas>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Top Cooks</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Cook</th>
+                                <th>Orders</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cook in top_cooks %}
+                            <tr>
+                                <td>{{ cook.user.username }}</td>
+                                <td>{{ cook.order_count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Top Meals</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Meal</th>
+                                <th>Orders</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for meal in top_meals %}
+                            <tr>
+                                <td>{{ meal.name }}</td>
+                                <td>{{ meal.order_count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for data in daily_revenue %}'{{ data.day }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Revenue',
+                data: [{% for data in daily_revenue %}{{ data.revenue|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Order Chart
+    const orderCtx = document.getElementById('orderChart').getContext('2d');
+    new Chart(orderCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for data in daily_orders %}'{{ data.day }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Orders',
+                data: [{% for data in daily_orders %}{{ data.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                backgroundColor: 'rgb(255, 99, 132)'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
+
+
+
+
+
+

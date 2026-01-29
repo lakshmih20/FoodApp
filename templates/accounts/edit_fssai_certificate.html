@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Upload FSSAI Certificate</h2>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+  {% if cook_profile.fssai_verification_status %}
+    <div class="mt-3">
+      <strong>Status:</strong> {{ cook_profile.get_fssai_verification_status_display }}<br>
+      <strong>Risk Level:</strong> {{ cook_profile.get_fssai_risk_level_display }}<br>
+      <strong>Notes:</strong> {{ cook_profile.fssai_verification_notes }}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

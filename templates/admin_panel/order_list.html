@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Orders - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-cart"></i> All Orders</h2>
+    </div>
+</div>
+
+<div class="mb-3">
+    <a href="?status=" class="btn btn-sm btn-outline-primary">All</a>
+    <a href="?status=pending" class="btn btn-sm btn-outline-warning">Pending</a>
+    <a href="?status=completed" class="btn btn-sm btn-outline-success">Completed</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Buyer</th>
+                        <th>Meal</th>
+                        <th>Cook</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>#{{ order.id }}</td>
+                        <td>{{ order.buyer.username }}</td>
+                        <td>{{ order.meal.name }}</td>
+                        <td>{{ order.cook.user.username }}</td>
+                        <td>₹{{ order.total_amount }}</td>
+                        <td><span class="badge bg-{% if order.status == 'completed' %}success{% elif order.status == 'pending' %}warning{% else %}info{% endif %}">{{ order.get_status_display }}</span></td>
+                        <td>{{ order.created_at|date:"M d, Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+
+
+

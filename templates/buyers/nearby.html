@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Nearby Home Cooks{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h2 class="mb-3">Find Nearby Home Cooks</h2>
+    <p class="text-muted">
+        We use your location to show real-time available meals from verified home cooks around you.
+    </p>
+
+    <div id="location-message" class="alert alert-info small" role="alert">
+        Asking for your location to find nearby cooks...
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mb-3">
+            <div id="map" style="width: 100%; height: 420px; border-radius: 8px; border: 1px solid #ddd;"></div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Filters</h5>
+                    <div class="mb-2">
+                        <label for="radiusSelect" class="form-label">Distance</label>
+                        <select id="radiusSelect" class="form-select form-select-sm">
+                            {% for r in radius_options %}
+                                <option value="{{ r }}" {% if r == default_radius %}selected{% endif %}>
+                                    Within {{ r }} km
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="availableOnly" checked>
+                        <label class="form-check-label" for="availableOnly">
+                            Only show cooks available now
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    Nearby Cooks &amp; Meals
+                </div>
+                <ul id="cooksList" class="list-group list-group-flush" style="max-height: 360px; overflow-y: auto;">
+                    <li class="list-group-item text-muted small">
+                        Waiting for your location...
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Load Google Maps JS -->
+{% if GOOGLE_MAPS_API_KEY %}
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}"></script>
+{% else %}
+    <div class="alert alert-warning mt-3">
+        Google Maps is not configured. Please set the <strong>GOOGLE_MAPS_API_KEY</strong> environment
+        variable (e.g., in a <code>.env</code> file) and restart the server. Without a valid API key the map
+        cannot load.
+    </div>
+{% endif %}
+<script src="{% static 'js/buyer_nearby.js' %}"></script>
+{% endblock %}
+
+

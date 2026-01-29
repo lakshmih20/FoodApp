@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Cook Dashboard - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-speedometer2"></i> Cook Dashboard</h2>
+        <p class="text-muted">Welcome, {{ cook_profile.user.username }}!</p>
+        {% if not cook_profile.is_verified %}
+            <div class="alert alert-warning mt-2">
+                <i class="bi bi-exclamation-triangle"></i> Your account is <strong>not verified</strong>. You cannot accept orders until verification is complete.
+            </div>
+        {% else %}
+            <div class="alert alert-success mt-2">
+                <i class="bi bi-shield-check"></i> Your account is <strong>verified</strong>! You can accept orders.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Meals</h5>
+                <h2>{{ total_meals }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Active Meals</h5>
+                <h2>{{ active_meals }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">Pending Orders</h5>
+                <h2>{{ pending_orders }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Today's Revenue</h5>
+                <h2>₹{{ today_revenue }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Recent Orders</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_orders %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Meal</th>
+                                    <th>Buyer</th>
+                                    <th>Quantity</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td>#{{ order.id }}</td>
+                                    <td>{{ order.meal.name }}</td>
+                                    <td>{{ order.buyer.username }}</td>
+                                    <td>{{ order.quantity }}</td>
+                                    <td>₹{{ order.total_amount }}</td>
+                                    <td><span class="badge bg-{% if order.status == 'completed' %}success{% elif order.status == 'pending' %}warning{% else %}secondary{% endif %}">{{ order.get_status_display }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No orders yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'cooks:meal_create' %}" class="btn btn-primary w-100 mb-2">
+                    <i class="bi bi-plus-circle"></i> Add New Meal
+                </a>
+                <a href="{% url 'cooks:meals' %}" class="btn btn-secondary w-100 mb-2">
+                    <i class="bi bi-list"></i> Manage Meals
+                </a>
+                <a href="{% url 'cooks:orders' %}" class="btn btn-secondary w-100 mb-2">
+                    <i class="bi bi-cart"></i> View Orders
+                </a>
+                <a href="{% url 'cooks:analytics' %}" class="btn btn-secondary w-100 mb-2">
+                    <i class="bi bi-graph-up"></i> Analytics
+                </a>
+                <a href="{% url 'cooks:reviews' %}" class="btn btn-secondary w-100 mb-2">
+                    <i class="bi bi-star"></i> View Reviews
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+
+
+

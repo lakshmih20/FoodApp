@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - HomeFood Connect{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, #4CAF50, #66BB6A);
+        padding: 40px;
+        border-radius: 20px;
+        color: #fff;
+        margin-bottom: 30px;
+    }
+    
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 4px solid #fff;
+        object-fit: cover;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .profile-avatar-placeholder {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 4px solid #fff;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 50px;
+        color: #fff;
+    }
+    
+    .profile-name {
+        font-size: 28px;
+        font-weight: 700;
+        margin-top: 15px;
+        margin-bottom: 5px;
+    }
+    
+    .profile-email {
+        font-size: 15px;
+        opacity: 0.9;
+    }
+    
+    .profile-badge {
+        display: inline-block;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-top: 10px;
+    }
+    
+    .badge-buyer {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+    }
+    
+    .badge-cook {
+        background: #fff;
+        color: #4CAF50;
+    }
+    
+    .profile-card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        padding: 25px;
+        margin-bottom: 20px;
+    }
+    
+    .profile-card-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .profile-card-title i {
+        color: #4CAF50;
+    }
+    
+    .profile-info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .profile-info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .profile-info-label {
+        font-weight: 500;
+        color: #666;
+    }
+    
+    .profile-info-value {
+        font-weight: 600;
+        color: #1a1a2e;
+    }
+    
+    .verification-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .verification-approved {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+    
+    .verification-pending {
+        background: #fff3e0;
+        color: #ef6c00;
+    }
+    
+    .verification-rejected {
+        background: #ffebee;
+        color: #c62828;
+    }
+    
+    .rating-stars {
+        color: #ffc107;
+    }
+    
+    .edit-profile-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 30px;
+        background: linear-gradient(135deg, #4CAF50, #66BB6A);
+        color: #fff;
+        border: none;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 15px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .edit-profile-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3);
+        color: #fff;
+    }
+    
+    .bio-text {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        font-style: italic;
+        color: #666;
+        line-height: 1.6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Profile Header -->
+        <div class="profile-header text-center">
+            {% if profile.profile_image %}
+                <img src="{{ profile.profile_image.url }}" alt="Profile" class="profile-avatar">
+            {% else %}
+                <div class="profile-avatar-placeholder mx-auto">
+                    <i class="fas fa-user"></i>
+                </div>
+            {% endif %}
+            <h1 class="profile-name">{{ user.username }}</h1>
+            <p class="profile-email">{{ user.email }}</p>
+            <span class="profile-badge {% if user.user_type == 'cook' %}badge-cook{% else %}badge-buyer{% endif %}">
+                <i class="fas {% if user.user_type == 'cook' %}fa-utensils{% else %}fa-shopping-bag{% endif %}"></i>
+                {{ user.get_user_type_display }}
+            </span>
+        </div>
+        
+        {% if profile %}
+        <div class="row">
+            <!-- Basic Info Card -->
+            <div class="col-md-6">
+                <div class="profile-card">
+                    <h3 class="profile-card-title">
+                        <i class="fas fa-user-circle"></i>
+                        Basic Information
+                    </h3>
+                    <div class="profile-info-row">
+                        <span class="profile-info-label">Username</span>
+                        <span class="profile-info-value">{{ user.username }}</span>
+                    </div>
+                    <div class="profile-info-row">
+                        <span class="profile-info-label">Email</span>
+                        <span class="profile-info-value">{{ user.email }}</span>
+                    </div>
+                    <div class="profile-info-row">
+                        <span class="profile-info-label">Phone</span>
+                        <span class="profile-info-value">{{ user.phone_number|default:"Not provided" }}</span>
+                    </div>
+                    <div class="profile-info-row">
+                        <span class="profile-info-label">Account Type</span>
+                        <span class="profile-info-value">{{ user.get_user_type_display }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Address Card -->
+            <div class="col-md-6">
+                <div class="profile-card">
+                    <h3 class="profile-card-title">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Address Details
+                    </h3>
+                    <div class="profile-info-row">
+                        <span class="profile-info-label">Address</span>
+                        <span class="profile-info-value">{{ profile.address|default:"Not provided" }}</span>
+                    </div>
+                    <div class="profile-info-row">
+                        <span class="profile-info-label">City</span>
+                        <span class="profile-info-value">{{ profile.city|default:"Not provided" }}</span>
+                    </div>
+                    <div class="profile-info-row">
+                        <span class="profile-info-label">State</span>
+                        <span class="profile-info-value">{{ profile.state|default:"Not provided" }}</span>
+                    </div>
+                    <div class="profile-info-row">
+                        <span class="profile-info-label">Pincode</span>
+                        <span class="profile-info-value">{{ profile.pincode|default:"Not provided" }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            {% if user.user_type == 'cook' %}
+            <!-- Cook Stats Card -->
+            <div class="col-md-6">
+                <div class="profile-card">
+                    <h3 class="profile-card-title">
+                        <i class="fas fa-chart-line"></i>
+                        Cook Statistics
+                    </h3>
+                    <div class="profile-info-row">
+                        <span class="profile-info-label">Verification</span>
+                        <span class="verification-badge verification-{{ profile.verification_status }}">
+                            {% if profile.verification_status == 'approved' %}
+                                <i class="fas fa-check-circle"></i>
+                            {% elif profile.verification_status == 'pending' %}
+                                <i class="fas fa-clock"></i>
+                            {% else %}
+                                <i class="fas fa-times-circle"></i>
+                            {% endif %}
+                            {{ profile.get_verification_status_display }}
+                        </span>
+                    </div>
+                    <div class="profile-info-row">
+                        <span class="profile-info-label">Rating</span>
+                        <span class="profile-info-value">
+                            <span class="rating-stars">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= profile.rating|floatformat:0|add:0 %}
+                                        <i class="fas fa-star"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                            {{ profile.rating }}/5.0
+                        </span>
+                    </div>
+                    <div class="profile-info-row">
+                        <span class="profile-info-label">Total Reviews</span>
+                        <span class="profile-info-value">{{ profile.total_reviews }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            {% if profile.bio %}
+            <!-- Bio Card -->
+            <div class="col-md-6">
+                <div class="profile-card">
+                    <h3 class="profile-card-title">
+                        <i class="fas fa-quote-left"></i>
+                        About Me
+                    </h3>
+                    <p class="bio-text">{{ profile.bio }}</p>
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+        
+        <!-- Action Button -->
+        <div class="text-center mt-4">
+            <a href="{% url 'accounts:edit_profile' %}" class="edit-profile-btn">
+                <i class="fas fa-edit"></i>
+                Edit Profile
+            </a>
+        </div>
+        {% else %}
+        <div class="profile-card text-center">
+            <i class="fas fa-user-plus" style="font-size: 60px; color: #4CAF50; margin-bottom: 20px;"></i>
+            <h4>No Profile Found</h4>
+            <p class="text-muted">Complete your profile to get started</p>
+            <a href="{% url 'accounts:edit_profile' %}" class="edit-profile-btn mt-3">
+                <i class="fas fa-plus"></i>
+                Create Profile
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

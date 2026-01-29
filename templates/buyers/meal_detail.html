@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ meal.name }} - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="meal-detail-card">
+    <div class="meal-detail-image">
+        {% if meal.images.first %}
+            <img src="{{ meal.images.first.image.url }}" alt="{{ meal.name }}">
+        {% else %}
+            <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400" alt="{{ meal.name }}">
+        {% endif %}
+    </div>
+    <div class="meal-detail-info">
+        <h1 class="meal-detail-title">{{ meal.name }}</h1>
+        <div class="meal-detail-meta">
+            <span class="meal-detail-cook">By <a href="{% url 'buyers:cook_profile' meal.cook.pk %}">{{ meal.cook.user.username }}</a></span>
+            <span class="meal-detail-price">₹{{ meal.price }}</span>
+        </div>
+        <div class="meal-detail-section">
+            <h3>Description</h3>
+            <p>{{ meal.description }}</p>
+        </div>
+        <div class="meal-detail-section">
+            <h3>Ingredients</h3>
+            <p>{{ meal.ingredients }}</p>
+        </div>
+        {% if meal.nutrition_info %}
+        <div class="meal-detail-section">
+            <h3>Nutrition Info</h3>
+            <ul>
+                {% for key, value in meal.nutrition_info.items %}
+                    <li><strong>{{ key|title }}:</strong> {{ value }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        <div class="meal-detail-section">
+            {% if pickup_slots %}
+                {% if user.is_authenticated %}
+                <form method="post" action="{% url 'buyers:create_order' meal.pk %}" class="meal-order-form">
+                    {% csrf_token %}
+                    <label for="pickup_slot">Pickup Slot</label>
+                    <select name="pickup_slot" id="pickup_slot" required>
+                        <option value="">Select a pickup slot</option>
+                        {% for slot in pickup_slots %}
+                            <option value="{{ slot.pk }}">{{ slot.date }} - {{ slot.start_time }} to {{ slot.end_time }} ({{ slot.available_quantity }} available)</option>
+                        {% endfor %}
+                    </select>
+                    <label for="quantity">Quantity</label>
+                    <input type="number" name="quantity" id="quantity" value="1" min="1" required>
+                    <label for="payment_method">Payment Method</label>
+                    <select name="payment_method" id="payment_method" required>
+                        <option value="cash">Cash on Pickup</option>
+                    </select>
+                    <label for="special_instructions">Special Instructions (Optional)</label>
+                    <textarea name="special_instructions" id="special_instructions" rows="2"></textarea>
+                    <button type="submit" class="meal-order-btn">Place Order</button>
+                </form>
+                {% else %}
+                <a href="{% url 'accounts:login' %}" class="meal-order-btn">Login to Order</a>
+                {% endif %}
+            {% else %}
+                <div class="no-slots-message" style="color: #c00; font-weight: 600; margin: 18px 0;">No pickup slots available. This meal cannot be ordered right now.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<style>
+.meal-detail-card {
+    max-width: 900px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(76,175,80,0.12);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    overflow: hidden;
+}
+.meal-detail-image {
+    flex: 1 1 340px;
+    min-width: 340px;
+    max-width: 420px;
+    background: #f7faf7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.meal-detail-image img {
+    width: 100%;
+    height: 320px;
+    object-fit: cover;
+    border-radius: 0 0 18px 18px;
+}
+.meal-detail-info {
+    flex: 2 1 400px;
+    padding: 32px 32px 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+.meal-detail-title {
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin-bottom: 0;
+}
+.meal-detail-meta {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    font-size: 1.1rem;
+    margin-bottom: 0;
+}
+.meal-detail-cook a {
+    color: #388E3C;
+    font-weight: 600;
+    text-decoration: none;
+}
+.meal-detail-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #4CAF50;
+}
+.meal-detail-section h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+.meal-detail-section p, .meal-detail-section ul {
+    font-size: 1rem;
+    color: #444;
+    margin-bottom: 0;
+}
+.meal-detail-section ul {
+    padding-left: 18px;
+}
+.meal-order-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
+}
+.meal-order-form label {
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+.meal-order-form select, .meal-order-form input, .meal-order-form textarea {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+.meal-order-btn {
+    background: #4CAF50;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 14px 0;
+    margin-top: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.meal-order-btn:hover {
+    background: #388E3C;
+}
+</style>
+
+<!-- Reviews Section -->
+<div class="section" style="background: linear-gradient(135deg, #fff5f2 0%, #ffe8e0 100%);">
+    <div class="container">
+        <h2 class="secondary" style="text-align: center; margin-bottom: 40px;">Reviews</h2>
+        {% if reviews %}
+            <div style="max-width: 800px; margin: 0 auto;">
+                {% for review in reviews %}
+                <div class="card" style="margin-bottom: 20px; padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                        <div>
+                            <h6 style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">{{ review.order.buyer.username }}</h6>
+                            <div style="margin-bottom: 10px;">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}
+                                        <ion-icon name="star" style="color: #ffc107; font-size: 18px;"></ion-icon>
+                                    {% else %}
+                                        <ion-icon name="star-outline" style="color: #ccc; font-size: 18px;"></ion-icon>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <p style="font-size: 16px; line-height: 1.6; color: var(--hf-muted); margin-bottom: 10px;">{{ review.comment }}</p>
+                            <small style="color: var(--hf-muted);">{{ review.created_at|date:"M d, Y" }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 40px;">
+                <p style="font-size: 18px; color: var(--hf-muted);">No reviews yet. Be the first to review this meal!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

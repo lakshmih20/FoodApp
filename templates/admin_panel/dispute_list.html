@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Disputes - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-exclamation-triangle"></i> Disputes & Complaints</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if disputes %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Buyer</th>
+                            <th>Cook</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dispute in disputes %}
+                        <tr>
+                            <td>#{{ dispute.id }}</td>
+                            <td>{{ dispute.buyer.username }}</td>
+                            <td>{{ dispute.cook.user.username }}</td>
+                            <td>₹{{ dispute.total_amount }}</td>
+                            <td><span class="badge bg-danger">{{ dispute.get_status_display }}</span></td>
+                            <td>{{ dispute.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No disputes found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+
+
+
+
+

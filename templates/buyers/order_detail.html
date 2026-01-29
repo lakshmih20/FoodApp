@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Order #{{ order.id }} - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Order Header -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Order #{{ order.id }}</h4>
+                    <span class="badge bg-{% if order.status == 'completed' %}success{% elif order.status == 'pending' %}warning{% elif order.status == 'rejected' or order.status == 'cancelled' %}danger{% else %}info{% endif %} py-2 px-3">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <!-- Meal Details -->
+                    <div class="row mb-4 pb-3 border-bottom">
+                        <div class="col-md-8">
+                            <h5 class="mb-2">{{ order.meal.name }}</h5>
+                            <p class="text-muted mb-1"><strong>🧑‍🍳 Cook:</strong> <a href="{% url 'buyers:cook_profile' order.cook.pk %}">{{ order.cook.user.username }}</a></p>
+                            <p class="text-muted mb-1"><strong>📦 Quantity:</strong> {{ order.quantity }} x ₹{{ order.meal.price }}</p>
+                            <p class="text-muted"><strong>📅 Order Date:</strong> {{ order.created_at|date:"d M, Y \a\t H:i" }}</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h5 class="text-success mb-0">₹{{ order.total_amount }}</h5>
+                        </div>
+                    </div>
+
+                    <!-- Pickup Location -->
+                    <div class="mb-4 pb-3 border-bottom">
+                        <h6 class="fw-bold mb-2">📍 Pickup Location</h6>
+                        <p class="mb-1">{{ order.cook.address }}<br>{{ order.cook.city }}, {{ order.cook.state }} {{ order.cook.pincode }}</p>
+                        {% if order.cook.latitude and order.cook.longitude %}
+                        <a href="https://maps.google.com/?q={{ order.cook.latitude }},{{ order.cook.longitude }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-geo-alt"></i> View on Google Maps
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    <!-- Pickup Schedule -->
+                    <div class="mb-4 pb-3 border-bottom">
+                        <h6 class="fw-bold mb-2">⏰ Pickup Schedule</h6>
+                        <p class="mb-1"><strong>Date:</strong> {{ order.pickup_slot.date|date:"d M, Y" }}</p>
+                        <p class="mb-0"><strong>Time:</strong> {{ order.pickup_slot.start_time|time:"H:i" }} - {{ order.pickup_slot.end_time|time:"H:i" }}</p>
+                    </div>
+
+                    <!-- Payment Info -->
+                    <div class="mb-4 pb-3 border-bottom">
+                        <h6 class="fw-bold mb-2">💳 Payment Details</h6>
+                        <p class="mb-1"><strong>Method:</strong> {{ order.get_payment_method_display }}</p>
+                    </div>
+
+                    <!-- Special Instructions -->
+                    {% if order.special_instructions %}
+                    <div class="mb-4 pb-3 border-bottom">
+                        <h6 class="fw-bold mb-2">📝 Special Instructions</h6>
+                        <p class="text-muted mb-0">{{ order.special_instructions }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Review Section -->
+                    {% if order.status == 'completed' %}
+                    <div class="alert alert-success mt-3 mb-0" role="alert">
+                        <h6 class="fw-bold mb-2">✅ Order Completed!</h6>
+                        <p class="mb-2">Thank you for your purchase! Please share your experience to help us improve and assist other customers.</p>
+                        {% if not has_review %}
+                        <a href="{% url 'buyers:add_review' order.pk %}" class="btn btn-success btn-lg">
+                            <i class="bi bi-star"></i> Add Your Review
+                        </a>
+                        {% else %}
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-check-circle"></i> You have already submitted a review for this order.
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% elif order.status == 'rejected' or order.status == 'cancelled' %}
+                    <div class="alert alert-danger mt-3 mb-0" role="alert">
+                        <i class="bi bi-exclamation-circle"></i> This order has been {{ order.get_status_display|lower }}.
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info mt-3 mb-0" role="alert">
+                        <i class="bi bi-info-circle"></i> You can add a review once the order is completed.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 12px;
+    }
+    
+    .card-header {
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .badge {
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+
+
+
+
+

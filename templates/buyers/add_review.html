@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Review - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Order Summary Card -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">📋 Order Summary</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="mb-2">{{ order.meal.name }}</h6>
+                            <p class="text-muted mb-1"><strong>Cook:</strong> {{ order.cook.user.username }}</p>
+                            <p class="text-muted mb-1"><strong>Quantity:</strong> {{ order.quantity }} x ₹{{ order.meal.price }}</p>
+                            <p class="text-muted"><strong>Order Date:</strong> {{ order.created_at|date:"d M, Y" }}</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h5 class="text-success">₹{{ order.total_amount }}</h5>
+                            <span class="badge bg-success">Completed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review Form Card -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">⭐ Share Your Review</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Overall Rating -->
+                        <div class="mb-4 pb-3 border-bottom">
+                            <label for="id_overall_rating" class="form-label fw-bold">Overall Rating *</label>
+                            <div class="d-flex gap-2">
+                                {{ form.overall_rating }}
+                            </div>
+                            {% if form.overall_rating.errors %}
+                                <div class="text-danger small mt-1">{{ form.overall_rating.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Questionnaire Section -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3">📝 Please answer the following questions:</h6>
+                            
+                            <!-- Freshness Rating -->
+                            <div class="mb-3">
+                                <label for="id_freshness_rating" class="form-label">
+                                    <i class="bi bi-leaf"></i> Was the food fresh?
+                                </label>
+                                {{ form.freshness_rating }}
+                                {% if form.freshness_rating.errors %}
+                                    <div class="text-danger small mt-1">{{ form.freshness_rating.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Hygiene Rating -->
+                            <div class="mb-3">
+                                <label for="id_hygiene_rating" class="form-label">
+                                    <i class="bi bi-shield-check"></i> Was the food hygienically packed?
+                                </label>
+                                {{ form.hygiene_rating }}
+                                {% if form.hygiene_rating.errors %}
+                                    <div class="text-danger small mt-1">{{ form.hygiene_rating.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Taste Rating -->
+                            <div class="mb-3">
+                                <label for="id_taste_rating" class="form-label">
+                                    <i class="bi bi-heart-fill"></i> Was the taste satisfactory?
+                                </label>
+                                {{ form.taste_rating }}
+                                {% if form.taste_rating.errors %}
+                                    <div class="text-danger small mt-1">{{ form.taste_rating.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Packaging Rating -->
+                            <div class="mb-3">
+                                <label for="id_packaging_rating" class="form-label">
+                                    <i class="bi bi-box-seam"></i> Was the pickup experience smooth?
+                                </label>
+                                {{ form.packaging_rating }}
+                                {% if form.packaging_rating.errors %}
+                                    <div class="text-danger small mt-1">{{ form.packaging_rating.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Comments Section -->
+                        <div class="mb-4 pb-3 border-bottom">
+                            <label for="id_comment" class="form-label fw-bold">💬 Additional Comments (Optional)</label>
+                            <small class="d-block text-muted mb-2">Share more details about your experience...</small>
+                            {{ form.comment }}
+                            {% if form.comment.errors %}
+                                <div class="text-danger small mt-1">{{ form.comment.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Photo Upload Section -->
+                        <div class="mb-4 pb-3 border-bottom">
+                            <label for="id_food_photo" class="form-label fw-bold">📷 Upload Food Photo (Optional)</label>
+                            <small class="d-block text-muted mb-2">Help other customers by uploading a photo of the meal you received</small>
+                            <div class="input-group">
+                                {{ form.food_photo }}
+                            </div>
+                            {% if form.food_photo.errors %}
+                                <div class="text-danger small mt-1">{{ form.food_photo.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-send"></i> Submit Review
+                            </button>
+                            <a href="{% url 'buyers:order_detail' order.pk %}" class="btn btn-outline-secondary btn-lg">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Info Alert -->
+            <div class="alert alert-info mt-4" role="alert">
+                <i class="bi bi-info-circle"></i> <strong>Note:</strong> Your review helps other customers make informed decisions and helps the cook improve their service. Please be honest and respectful in your feedback.
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #ddd;
+    }
+    
+    .form-select:focus, .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .form-label {
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+
+
+
+
+

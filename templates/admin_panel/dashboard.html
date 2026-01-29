@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-speedometer2"></i> Admin Dashboard</h2>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Users</h5>
+                <h2>{{ total_users }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Total Cooks</h5>
+                <h2>{{ total_cooks }}</h2>
+                <small>Verified: {{ verified_cooks }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">Pending Verifications</h5>
+                <h2>{{ pending_verifications }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Today's Revenue</h5>
+                <h2>₹{{ today_revenue }}</h2>
+                <small>Orders: {{ today_orders }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Recent Orders</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_orders %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Buyer</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td>#{{ order.id }}</td>
+                                    <td>{{ order.buyer.username }}</td>
+                                    <td>₹{{ order.total_amount }}</td>
+                                    <td><span class="badge bg-{% if order.status == 'completed' %}success{% else %}warning{% endif %}">{{ order.get_status_display }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No recent orders.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Pending Cook Verifications</h5>
+            </div>
+            <div class="card-body">
+                {% if pending_cooks %}
+                    <div class="list-group">
+                        {% for cook in pending_cooks %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6>{{ cook.user.username }}</h6>
+                                    <small>{{ cook.city }}, {{ cook.state }}</small><br>
+                                    <span class="badge bg-info">FSSAI Status: {{ cook.get_fssai_verification_status_display }}</span>
+                                    <span class="badge bg-warning text-dark">Risk: {{ cook.get_fssai_risk_level_display }}</span>
+                                    {% if cook.fssai_verification_notes %}<br><small>Notes: {{ cook.fssai_verification_notes }}</small>{% endif %}
+                                    {% if cook.fssai_certificate %}<br><a href="{{ cook.fssai_certificate.url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-1">View Certificate</a>{% endif %}
+                                </div>
+                                <div>
+                                    <a href="{% url 'admin_panel:verify_cook' cook.pk %}" class="btn btn-sm btn-success">Approve</a>
+                                    <a href="{% url 'admin_panel:reject_cook' cook.pk %}" class="btn btn-sm btn-danger">Reject</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No pending verifications.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+
+
+

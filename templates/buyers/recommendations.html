@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Recommendations - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-lightbulb"></i> Personalized Recommendations</h2>
+        <p class="text-muted">Based on your preferences and past orders</p>
+    </div>
+</div>
+
+<div class="row">
+    {% for meal in recommended_meals %}
+    <div class="col-md-3 mb-4">
+        <div class="card h-100">
+            {% if meal.images.first %}
+                <img src="{{ meal.images.first.image.url }}" class="card-img-top" alt="{{ meal.name }}" style="height: 200px; object-fit: cover;">
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ meal.name }}</h5>
+                <p class="card-text">{{ meal.description|truncatewords:10 }}</p>
+                <p class="card-text"><strong>₹{{ meal.price }}</strong></p>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'buyers:meal_detail' meal.pk %}" class="btn btn-primary btn-sm w-100">View Details</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No recommendations available yet. Start ordering meals to get personalized recommendations!
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+
+
+
+
+

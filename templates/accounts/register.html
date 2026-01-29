@@ -1,0 +1,437 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - HomeFood Connect</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Custom FOODIED Style CSS -->
+    <link rel="stylesheet" href="{% static 'css/foodied.css' %}?v=1">
+    
+    <style>
+        .auth-page {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 50%, #a5d6a7 100%);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .auth-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 100px 20px 40px;
+        }
+        
+        .auth-card {
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 50px 40px;
+            animation: fadeInUp 0.6s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+        
+        .auth-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #4CAF50, #66BB6A);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 30px;
+            color: #fff;
+        }
+        
+        .auth-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        
+        .auth-subtitle {
+            font-size: 15px;
+            color: #666;
+        }
+        
+        .form-group {
+            margin-bottom: 22px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 15px;
+            border: 2px solid #e8f5e9;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            background: #fafafa;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #4CAF50;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+        }
+        
+        .form-error {
+            color: #e53935;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+        
+        .user-type-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 8px;
+        }
+        
+        .user-type-option {
+            flex: 1;
+            position: relative;
+        }
+        
+        .user-type-option input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .user-type-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 20px;
+            border: 2px solid #e8f5e9;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            background: #fafafa;
+        }
+        
+        .user-type-option input:checked + .user-type-label {
+            border-color: #4CAF50;
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            color: #2e7d32;
+        }
+        
+        .user-type-label:hover {
+            border-color: #81C784;
+        }
+        
+        .auth-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #4CAF50, #66BB6A);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            margin-top: 10px;
+        }
+        
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3);
+        }
+        
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            margin: 30px 0;
+        }
+        
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e0e0e0;
+        }
+        
+        .auth-divider span {
+            padding: 0 15px;
+            color: #999;
+            font-size: 14px;
+        }
+        
+        .auth-footer {
+            text-align: center;
+            color: #666;
+            font-size: 15px;
+        }
+        
+        .auth-footer a {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        
+        .auth-footer a:hover {
+            color: #388E3C;
+        }
+        
+        /* Style Django form widgets */
+        .auth-card input[type="text"],
+        .auth-card input[type="email"],
+        .auth-card input[type="password"],
+        .auth-card input[type="tel"],
+        .auth-card select {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 15px;
+            border: 2px solid #e8f5e9;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            background: #fafafa;
+        }
+        
+        .auth-card input:focus,
+        .auth-card select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+        }
+        
+        .auth-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .auth-card ul li {
+            display: inline-block;
+            margin-right: 20px;
+        }
+        
+        .auth-card ul li label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .auth-card ul li input[type="radio"] {
+            width: auto;
+            accent-color: #4CAF50;
+        }
+        
+        @media (max-width: 576px) {
+            .auth-card {
+                padding: 35px 25px;
+                margin: 0 15px;
+            }
+            
+            .auth-title {
+                font-size: 26px;
+            }
+            
+            .user-type-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-page">
+        <!-- Navigation -->
+        <nav class="foodied-nav">
+            <div class="nav-container">
+                <a href="{% url 'buyers:home' %}" class="nav-logo">
+                    <i class="fas fa-utensils"></i>
+                    <span>HomeFood</span>
+                </a>
+                
+                <ul class="nav-menu">
+                    <li><a href="{% url 'buyers:home' %}">Home</a></li>
+                    <li><a href="{% url 'buyers:search' %}">Search</a></li>
+                </ul>
+                
+                <div class="nav-actions">
+                    <a href="{% url 'accounts:login' %}" class="nav-btn-outline" style="padding: 10px 24px; background: transparent; color: #4CAF50; border: 2px solid #4CAF50; border-radius: 25px; font-weight: 600; font-size: 14px; text-decoration: none; transition: all 0.3s ease;">Login</a>
+                    <a href="{% url 'accounts:register' %}" class="nav-signup-btn">Sign Up</a>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Register Form -->
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <div class="auth-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h1 class="auth-title">Create Account</h1>
+                    <p class="auth-subtitle">Join HomeFood Connect and discover amazing home-cooked meals!</p>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="form-error">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="form-error">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        {{ form.phone_number }}
+                        {% if form.phone_number.errors %}
+                            <div class="form-error">{{ form.phone_number.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">I am a:</label>
+                        {{ form.user_type }}
+                        {% if form.user_type.errors %}
+                            <div class="form-error">{{ form.user_type.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Cook location fields -->
+                    <div id="cook-location-fields" style="display: none;">
+                        <h3>Cook Location Details</h3>
+                        <div class="form-group">
+                            <label>Address</label>
+                            {{ cook_form.address }}
+                            {% if cook_form.address.errors %}
+                                <div class="form-error">{{ cook_form.address.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label>City</label>
+                            {{ cook_form.city }}
+                            {% if cook_form.city.errors %}
+                                <div class="form-error">{{ cook_form.city.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label>State</label>
+                            {{ cook_form.state }}
+                            {% if cook_form.state.errors %}
+                                <div class="form-error">{{ cook_form.state.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label>Pincode</label>
+                            {{ cook_form.pincode }}
+                            {% if cook_form.pincode.errors %}
+                                <div class="form-error">{{ cook_form.pincode.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}
+                            <div class="form-error">{{ form.password1.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Confirm Password</label>
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}
+                            <div class="form-error">{{ form.password2.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <button type="submit" class="auth-btn">
+                        <i class="fas fa-user-plus" style="margin-right: 8px;"></i>
+                        Create Account
+                    </button>
+                </form>
+                
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+                
+                <p class="auth-footer">
+                    Already have an account? <a href="{% url 'accounts:login' %}">Login here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    function toggleCookFields() {
+        var cookFields = document.getElementById('cook-location-fields');
+        var cookRadio = document.querySelector('input[type=radio][value="cook"]');
+        if (cookRadio && cookRadio.checked) {
+            cookFields.style.display = 'block';
+        } else {
+            cookFields.style.display = 'none';
+        }
+    }
+    toggleCookFields();
+    document.querySelectorAll('input[name="user_type"]').forEach(function(radio) {
+        radio.addEventListener('change', toggleCookFields);
+    });
+});
+</script>
+</body>
+</html>

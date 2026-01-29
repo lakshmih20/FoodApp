@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Orders - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-cart"></i> Orders</h2>
+    </div>
+</div>
+
+<div class="mb-3">
+    <a href="?status=" class="btn btn-sm btn-outline-primary">All</a>
+    <a href="?status=pending" class="btn btn-sm btn-outline-warning">Pending</a>
+    <a href="?status=accepted" class="btn btn-sm btn-outline-info">Accepted</a>
+    <a href="?status=completed" class="btn btn-sm btn-outline-success">Completed</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if orders %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Meal</th>
+                            <th>Buyer</th>
+                            <th>Quantity</th>
+                            <th>Amount</th>
+                            <th>Pickup Date/Time</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td>#{{ order.id }}</td>
+                            <td>{{ order.meal.name }}</td>
+                            <td>{{ order.buyer.username }}</td>
+                            <td>{{ order.quantity }}</td>
+                            <td>₹{{ order.total_amount }}</td>
+                            <td>{{ order.pickup_slot.date }}<br>{{ order.pickup_slot.start_time }}</td>
+                            <td><span class="badge bg-{% if order.status == 'completed' %}success{% elif order.status == 'pending' %}warning{% elif order.status == 'rejected' %}danger{% else %}info{% endif %}">{{ order.get_status_display }}</span></td>
+                            <td><span class="badge bg-{% if order.payment_status == 'paid' %}success{% else %}warning{% endif %}">{{ order.get_payment_status_display }}</span></td>
+                            <td>
+                                {% if order.status == 'pending' %}
+                                    <a href="{% url 'cooks:order_accept' order.pk %}" class="btn btn-sm btn-success">Accept</a>
+                                    <a href="{% url 'cooks:order_reject' order.pk %}" class="btn btn-sm btn-danger">Reject</a>
+                                {% elif order.status == 'accepted' %}
+                                    <form method="post" action="{% url 'cooks:order_update_status' order.pk %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="preparing">
+                                        <button type="submit" class="btn btn-sm btn-info">Mark Preparing</button>
+                                    </form>
+                                {% elif order.status == 'preparing' %}
+                                    <form method="post" action="{% url 'cooks:order_update_status' order.pk %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="ready">
+                                        <button type="submit" class="btn btn-sm btn-warning">Mark Ready</button>
+                                    </form>
+                                {% elif order.status == 'ready' %}
+                                    <form method="post" action="{% url 'cooks:order_update_status' order.pk %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="completed">
+                                        <button type="submit" class="btn btn-sm btn-success">Complete</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No orders found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+
+
+
+
+

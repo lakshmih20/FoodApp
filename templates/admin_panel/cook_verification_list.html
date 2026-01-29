@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Cook Verification - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-shield-check"></i> Cook Verification</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if pending_cooks %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Location</th>
+                            <th>FSSAI Certificate</th>
+                            <th>FSSAI Number</th>
+                            <th>Applied On</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cook in pending_cooks %}
+                        <tr>
+                            <td>{{ cook.user.username }}</td>
+                            <td>{{ cook.user.email }}</td>
+                            <td>{{ cook.city }}, {{ cook.state }}</td>
+                            <td>
+                                {% if cook.fssai_certificate %}
+                                    <a href="{{ cook.fssai_certificate.url }}" target="_blank">View Certificate</a>
+                                {% else %}
+                                    <span class="text-muted">Not uploaded</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ cook.fssai_certificate_number|default:'-' }}</td>
+                            <td>{{ cook.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <a href="{% url 'admin_panel:verify_cook' cook.pk %}" class="btn btn-sm btn-success">Approve</a>
+                                <a href="{% url 'admin_panel:reject_cook' cook.pk %}" class="btn btn-sm btn-danger">Reject</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No pending verifications.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+
+
+
+
+

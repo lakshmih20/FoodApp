@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Reviews - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-star"></i> Reviews</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if reviews %}
+            {% for review in reviews %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5>{{ review.order.meal.name }}</h5>
+                            <p class="mb-1">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.overall_rating %}
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                    {% else %}
+                                        <i class="bi bi-star text-muted"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="ms-2">{{ review.overall_rating }}/5</span>
+                            </p>
+                            <p class="text-muted">By {{ review.order.buyer.username }} on {{ review.created_at|date:"M d, Y" }}</p>
+                            <p>{{ review.comment }}</p>
+                            <ul class="mb-2">
+                                <li><strong>Freshness:</strong> {{ review.get_freshness_rating_display }}</li>
+                                <li><strong>Hygiene:</strong> {{ review.get_hygiene_rating_display }}</li>
+                                <li><strong>Taste:</strong> {{ review.get_taste_rating_display }}</li>
+                                <li><strong>Packaging:</strong> {{ review.get_packaging_rating_display }}</li>
+                            </ul>
+                            {% if review.food_photo %}
+                                <img src="{{ review.food_photo.url }}" alt="Food Photo" style="max-width:120px; max-height:120px; border-radius:8px;" class="mb-2" />
+                            {% endif %}
+                            {% if review.sentiment_score %}
+                                <small class="text-muted">Sentiment: {{ review.sentiment_score }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-muted">No reviews yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+
+
+
+
+

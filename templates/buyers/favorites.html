@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Favorites - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-heart"></i> My Favorite Cooks</h2>
+    </div>
+</div>
+
+<div class="row">
+    {% for cook in favorite_cooks %}
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ cook.user.username }}</h5>
+                <p class="card-text">
+                    <i class="bi bi-star-fill text-warning"></i> {{ cook.rating }}/5.0
+                    <span class="ms-2">({{ cook.total_reviews }} reviews)</span>
+                </p>
+                <p class="card-text"><small class="text-muted">{{ cook.city }}, {{ cook.state }}</small></p>
+                <a href="{% url 'buyers:cook_profile' cook.pk %}" class="btn btn-sm btn-primary">View Profile</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No favorite cooks yet. Start exploring and add cooks to your favorites!
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+
+
+
+
+

@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Orders - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="section" style="padding-top: 20px;">
+    <div class="container">
+        <h1 class="primary" style="font-size: 48px; margin-bottom: 30px;">
+            <ion-icon name="receipt-outline" style="vertical-align: middle;"></ion-icon> My Orders
+        </h1>
+
+        <!-- Filter Buttons -->
+        <div style="margin-bottom: 30px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="?status=" class="btn btn-menu {% if not request.GET.status %}active{% endif %}" style="background: {% if not request.GET.status %}var(--clr-primary); color: #fff;{% endif %}">All</a>
+            <a href="?status=pending" class="btn btn-menu {% if request.GET.status == 'pending' %}active{% endif %}" style="background: {% if request.GET.status == 'pending' %}var(--clr-primary); color: #fff;{% endif %}">Pending</a>
+            <a href="?status=accepted" class="btn btn-menu {% if request.GET.status == 'accepted' %}active{% endif %}" style="background: {% if request.GET.status == 'accepted' %}var(--clr-primary); color: #fff;{% endif %}">Accepted</a>
+            <a href="?status=completed" class="btn btn-menu {% if request.GET.status == 'completed' %}active{% endif %}" style="background: {% if request.GET.status == 'completed' %}var(--clr-primary); color: #fff;{% endif %}">Completed</a>
+        </div>
+
+        {% if orders %}
+            <div class="restaurant-menu" style="grid-template-columns: 1fr; gap: 20px;">
+                {% for order in orders %}
+                <div class="card" style="padding: 25px; animation: fadeInUp 0.6s ease;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <h3 style="font-size: 22px; font-weight: 700; margin-bottom: 10px; color: var(--clr-secondary);">
+                                Order #{{ order.id }}
+                            </h3>
+                            <p style="font-size: 18px; margin-bottom: 8px; color: var(--clr-secondary);">
+                                <strong>{{ order.meal.name }}</strong>
+                            </p>
+                            <p style="font-size: 16px; color: var(--hf-muted); margin-bottom: 5px;">
+                                <ion-icon name="person-outline" style="vertical-align: middle;"></ion-icon> Cook: {{ order.cook.user.username }}
+                            </p>
+                            <p style="font-size: 16px; color: var(--hf-muted); margin-bottom: 5px;">
+                                <ion-icon name="calendar-outline" style="vertical-align: middle;"></ion-icon> {{ order.pickup_slot.date }} at {{ order.pickup_slot.start_time }}
+                            </p>
+                            <p style="font-size: 16px; color: var(--hf-muted); margin-bottom: 10px;">
+                                <ion-icon name="cube-outline" style="vertical-align: middle;"></ion-icon> Quantity: {{ order.quantity }}
+                            </p>
+                        </div>
+                        <div style="text-align: right; min-width: 150px;">
+                            <div style="font-size: 28px; font-weight: 700; color: var(--clr-primary); margin-bottom: 15px;">
+                                ₹{{ order.total_amount }}
+                            </div>
+                            <span class="badge" style="background: {% if order.status == 'completed' %}#28a745{% elif order.status == 'pending' %}#ffc107{% elif order.status == 'rejected' %}#dc3545{% else %}#17a2b8{% endif %}; color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600;">
+                                {{ order.get_status_display }}
+                            </span>
+                        </div>
+                        <div style="flex-basis: 100%; display: flex; gap: 10px; margin-top: 15px;">
+                            <a href="{% url 'buyers:order_detail' order.pk %}" class="btn btn-menu" style="flex: 1;">
+                                <ion-icon name="eye-outline" style="vertical-align: middle;"></ion-icon> View Details
+                            </a>
+                            {% if order.status == 'completed' %}
+                                <a href="{% url 'buyers:add_review' order.pk %}" class="btn btn-menu" style="flex: 1; background: var(--clr-primary); color: #fff;">
+                                    <ion-icon name="star-outline" style="vertical-align: middle;"></ion-icon> Review
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card" style="padding: 60px; text-align: center; animation: fadeInUp 0.8s ease;">
+                <ion-icon name="receipt-outline" style="font-size: 80px; color: var(--hf-muted); margin-bottom: 20px;"></ion-icon>
+                <p style="font-size: 20px; color: var(--hf-muted);">No orders found.</p>
+                <a href="{% url 'buyers:home' %}" class="btn" style="margin-top: 20px;">Browse Meals</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
