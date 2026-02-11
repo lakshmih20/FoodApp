@@ -173,8 +173,7 @@ LOGOUT_REDIRECT_URL = 'accounts:login'
 RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID', '')
 RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET', '')
 
-# Google Maps API
-GOOGLE_MAPS_API_KEY = 'AIzaSyD3u7_-m8SppHnlII9qnUkr1jA0gzJu_Ck'
+
 
 # MSG91 Settings
 MSG91_AUTH_KEY = os.getenv('MSG91_AUTH_KEY', '')
