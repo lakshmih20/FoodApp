@@ -1,0 +1,44 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}Meals - HomeFood Connect{% endblock %}
+
+{% block admin_content %}
+<h2 style="margin-bottom:16px;"><i class="bi bi-basket"></i> Meals</h2>
+
+<div class="card">
+    <div class="card-body table-responsive">
+        <table class="table table-sm">
+            <thead><tr><th>Image</th><th>Meal</th><th>Cook</th><th>Price</th><th>Published date</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+            {% for meal in meals %}
+                <tr>
+                    <td>
+                        {% if meal.images.first %}
+                        <img src="{{ meal.images.first.image.url }}" alt="meal" style="width:56px; height:56px; border-radius:8px; object-fit:cover;">
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ meal.name }}</td>
+                    <td>{{ meal.cook.user.username }}</td>
+                    <td>₹{{ meal.price }}</td>
+                    <td>{{ meal.created_at|date:"d M Y" }}</td>
+                    <td>
+                        {% if meal.is_available %}
+                        <span style="padding:4px 10px; border-radius:999px; background:#EAF3DE; color:#27500A; font-size:12px;">Published</span>
+                        {% else %}
+                        <span style="padding:4px 10px; border-radius:999px; background:#FCEBEB; color:#A32D2D; font-size:12px;">Unpublished</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'admin_panel:toggle_meal_publish' meal.id %}" class="btn btn-sm" style="border-radius:999px; {% if meal.is_available %}background:#FCEBEB; color:#A32D2D;{% else %}background:#EAF3DE; color:#27500A;{% endif %}">{% if meal.is_available %}Unpublish{% else %}Republish{% endif %}</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7" class="text-muted">No meals found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

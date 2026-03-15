@@ -1,52 +1,63 @@
-{% extends 'base.html' %}
+{% extends 'admin_panel/base_admin.html' %}
 
 {% block title %}Users - HomeFood Connect{% endblock %}
 
-{% block content %}
-<div class="row mb-4">
-    <div class="col">
-        <h2><i class="bi bi-people"></i> Users</h2>
-    </div>
-</div>
+{% block admin_content %}
+<h2 style="margin-bottom:16px;"><i class="bi bi-people"></i> Users</h2>
 
 <div class="mb-3">
-    <a href="?type=" class="btn btn-sm btn-outline-primary">All</a>
-    <a href="?type=buyer" class="btn btn-sm btn-outline-info">Buyers</a>
-    <a href="?type=cook" class="btn btn-sm btn-outline-success">Cooks</a>
+    <a href="?tab=buyers" class="btn btn-sm {% if tab == 'buyers' %}btn-success{% else %}btn-outline-success{% endif %}" style="border-radius:999px;">Buyers</a>
+    <a href="?tab=cooks" class="btn btn-sm {% if tab == 'cooks' %}btn-success{% else %}btn-outline-success{% endif %}" style="border-radius:999px;">Cooks</a>
 </div>
 
 <div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Username</th>
-                        <th>Email</th>
-                        <th>Type</th>
-                        <th>Phone</th>
-                        <th>Joined</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                    <tr>
-                        <td>{{ user.username }}</td>
-                        <td>{{ user.email }}</td>
-                        <td><span class="badge bg-{% if user.user_type == 'cook' %}success{% elif user.user_type == 'buyer' %}info{% else %}primary{% endif %}">{{ user.get_user_type_display }}</span></td>
-                        <td>{{ user.phone_number|default:"-" }}</td>
-                        <td>{{ user.date_joined|date:"M d, Y" }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div class="card-body table-responsive">
+        {% if tab == 'cooks' %}
+        <table class="table table-sm">
+            <thead><tr><th>Username</th><th>Email</th><th>Date joined</th><th>Total meals published</th><th>Verification</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+            {% for user in cooks %}
+                <tr>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.date_joined|date:"d M Y" }}</td>
+                    <td>{{ user.total_meals }}</td>
+                    <td>
+                        {% if user.cook_profile.is_verified %}
+                            <span style="padding:4px 10px; border-radius:999px; background:#EAF3DE; color:#27500A; font-size:12px;">Verified</span>
+                        {% elif user.cook_profile.verification_status == 'pending' %}
+                            <span style="padding:4px 10px; border-radius:999px; background:#FAEEDA; color:#633806; font-size:12px;">Pending</span>
+                        {% else %}
+                            <span style="padding:4px 10px; border-radius:999px; background:#FCEBEB; color:#A32D2D; font-size:12px;">Rejected</span>
+                        {% endif %}
+                    </td>
+                    <td>{% if user.is_active %}Active{% else %}Inactive{% endif %}</td>
+                    <td><a href="{% url 'admin_panel:toggle_user_active' user.id %}" class="btn btn-sm" style="border-radius:999px; {% if user.is_active %}background:#FCEBEB; color:#A32D2D;{% else %}background:#EAF3DE; color:#27500A;{% endif %}">{% if user.is_active %}Deactivate{% else %}Activate{% endif %}</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7" class="text-muted">No cooks found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <table class="table table-sm">
+            <thead><tr><th>Username</th><th>Email</th><th>Date joined</th><th>Total orders placed</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+            {% for user in buyers %}
+                <tr>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.date_joined|date:"d M Y" }}</td>
+                    <td>{{ user.total_orders }}</td>
+                    <td>{% if user.is_active %}Active{% else %}Inactive{% endif %}</td>
+                    <td><a href="{% url 'admin_panel:toggle_user_active' user.id %}" class="btn btn-sm" style="border-radius:999px; {% if user.is_active %}background:#FCEBEB; color:#A32D2D;{% else %}background:#EAF3DE; color:#27500A;{% endif %}">{% if user.is_active %}Deactivate{% else %}Activate{% endif %}</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-muted">No buyers found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
-
-
-
-
-
-

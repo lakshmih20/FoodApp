@@ -1,5 +1,9 @@
 import requests
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.conf import settings
+
+from .models import Notification
 
 
 class MSG91Service:
@@ -95,6 +99,36 @@ class NotificationService:
         mobile = payment.order.buyer.phone_number
         if mobile:
             self.msg91.send_sms(mobile, message)
+
+
+def notify_buyer_order_status(order, status=None):
+    """Create a persistent notification and push it over the buyer's personal WebSocket channel."""
+    status_value = status or order.status
+    allowed_statuses = {'accepted', 'rejected', 'preparing', 'ready'}
+    if status_value not in allowed_statuses:
+        return None
+
+    status_label = dict(order.ORDER_STATUS).get(status_value, status_value.replace('_', ' ').title())
+    message = f"Your order #{order.id} for {order.meal.name} is now {status_label.lower()}."
+    notification = Notification.objects.create(user=order.buyer, message=message)
+
+    channel_layer = get_channel_layer()
+    if channel_layer is not None:
+        async_to_sync(channel_layer.group_send)(
+            f"user_{order.buyer_id}",
+            {
+                'type': 'send_notification',
+                'notification': {
+                    'id': notification.id,
+                    'message': notification.message,
+                    'order_id': order.id,
+                    'status': status_value,
+                    'created_at': notification.created_at.isoformat(),
+                },
+            }
+        )
+
+    return notification
 
 
 

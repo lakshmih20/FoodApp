@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Live Cooking - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-broadcast"></i> Live Cooking</h2>
+    <p class="text-muted mb-0">Watch cooks prepare meals live from their home kitchens.</p>
+</div>
+
+<div class="row">
+    {% if live_streams %}
+        {% for stream in live_streams %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ stream.title }}</h5>
+                        <p class="text-muted mb-2">By {{ stream.cook.user.username }}</p>
+                        <p class="text-muted small">Viewers: {{ stream.current_viewers }}</p>
+                        <a href="{% url 'live_streaming:stream_detail' stream.id %}" class="btn btn-primary w-100">
+                            Watch Live
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col">
+            <div class="alert alert-info">
+                No live streams right now. Please check again later.
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

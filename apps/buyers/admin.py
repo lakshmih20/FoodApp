@@ -11,7 +11,7 @@ class BuyerOrderAdmin(admin.ModelAdmin):
 
 @admin.register(BuyerReview)
 class BuyerReviewAdmin(admin.ModelAdmin):
-    list_display = ('order', 'overall_rating', 'sentiment_score', 'created_at')
+    list_display = ('order', 'overall_rating', 'created_at')
     list_filter = ('overall_rating', 'created_at')
 
 

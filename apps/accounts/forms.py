@@ -26,6 +26,21 @@ class UserRegistrationForm(UserCreationForm):
 
 
 class UserProfileForm(forms.ModelForm):
+    DIETARY_CHOICES = [
+        ('vegetarian', 'Vegetarian'),
+        ('vegan', 'Vegan'),
+        ('jain', 'Jain'),
+        ('eggetarian', 'Eggetarian'),
+        ('non_vegetarian', 'Non-Vegetarian'),
+        ('gluten_free', 'Gluten Free'),
+    ]
+
+    dietary_preferences = forms.MultipleChoiceField(
+        choices=DIETARY_CHOICES,
+        required=False,
+        widget=forms.SelectMultiple(attrs={'class': 'form-control'})
+    )
+
     class Meta:
         model = UserProfile
         fields = ['address', 'city', 'state', 'pincode', 'latitude', 'longitude', 
@@ -37,9 +52,11 @@ class UserProfileForm(forms.ModelForm):
             'pincode': forms.TextInput(attrs={'class': 'form-control'}),
             'latitude': forms.NumberInput(attrs={'class': 'form-control', 'step': 'any'}),
             'longitude': forms.NumberInput(attrs={'class': 'form-control', 'step': 'any'}),
-            'dietary_preferences': forms.SelectMultiple(attrs={'class': 'form-control'}),
             'profile_image': forms.FileInput(attrs={'class': 'form-control'}),
         }
+
+    def clean_dietary_preferences(self):
+        return self.cleaned_data.get('dietary_preferences') or []
 
 
 class CookProfileForm(forms.ModelForm):
@@ -71,10 +88,10 @@ class CookRegistrationForm(forms.ModelForm):
         fields = ['bio', 'address', 'city', 'state', 'pincode', 'profile_image', 'fssai_certificate', 'fssai_certificate_number']
         widgets = {
             'bio': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'address': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'required': True}),
-            'city': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
-            'state': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
-            'pincode': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
+            'address': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'state': forms.TextInput(attrs={'class': 'form-control'}),
+            'pincode': forms.TextInput(attrs={'class': 'form-control'}),
             'profile_image': forms.FileInput(attrs={'class': 'form-control'}),
             'fssai_certificate': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'fssai_certificate_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'FSSAI Registration Number'}),

@@ -1,5 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from .forms import CookFSSAICertificateForm
+from apps.buyers.models import BuyerOrder
+from apps.live_streaming.models import LiveStream
 
 # Cook FSSAI certificate upload/update view
 @login_required
@@ -14,6 +16,8 @@ def fssai_certificate_upload(request):
         if form.is_valid():
             cook_profile = form.save(commit=False)
             # Removed status/risk logic
+            cook_profile.verification_status = 'pending'
+            cook_profile.is_verified = False
             cook_profile.save()
             messages.success(request, 'Certificate uploaded. Awaiting admin verification.')
             return redirect('cooks:dashboard')
@@ -31,6 +35,25 @@ from math import radians, sin, cos, asin, sqrt
 from .models import Meal, MealImage, PickupSlot, CookOrder, CookReview, CookAnalytics
 from .forms import MealForm, MealImageForm, PickupSlotForm
 from apps.accounts.models import CookProfile
+from apps.notifications.services import notify_buyer_order_status
+
+
+def _find_matching_buyer_order(cook_order, cook_profile):
+    return BuyerOrder.objects.filter(
+        buyer=cook_order.buyer,
+        cook=cook_profile,
+        meal=cook_order.meal,
+        pickup_slot=cook_order.pickup_slot,
+        quantity=cook_order.quantity,
+    ).order_by('-created_at').first()
+
+
+def _sync_buyer_order_status(cook_order, cook_profile, status):
+    buyer_order = _find_matching_buyer_order(cook_order, cook_profile)
+    if buyer_order:
+        buyer_order.status = status
+        buyer_order.save(update_fields=['status', 'updated_at'])
+    return buyer_order
 
 
 @login_required
@@ -97,6 +120,9 @@ def meal_create(request):
         return redirect('buyers:home')
     
     cook_profile = get_object_or_404(CookProfile, user=request.user)
+    if not cook_profile.is_verified:
+        messages.warning(request, 'Your account is pending admin verification. You cannot publish meals until verified.')
+        return redirect('cooks:dashboard')
 
     if request.method == 'POST':
         form = MealForm(request.POST)
@@ -234,6 +260,9 @@ def order_accept(request, pk):
     
     order.status = 'accepted'
     order.save()
+    buyer_order = _sync_buyer_order_status(order, cook_profile, 'accepted')
+    if buyer_order:
+        notify_buyer_order_status(buyer_order, 'accepted')
     
     # Update pickup slot availability
     order.pickup_slot.available_quantity -= order.quantity
@@ -259,6 +288,9 @@ def order_reject(request, pk):
     
     order.status = 'rejected'
     order.save()
+    buyer_order = _sync_buyer_order_status(order, cook_profile, 'rejected')
+    if buyer_order:
+        notify_buyer_order_status(buyer_order, 'rejected')
     
     messages.success(request, 'Order rejected.')
     return redirect('cooks:orders')
@@ -279,6 +311,13 @@ def order_update_status(request, pk):
         if new_status in dict(CookOrder.ORDER_STATUS):
             order.status = new_status
             order.save()
+            buyer_order = _sync_buyer_order_status(order, cook_profile, new_status)
+            if buyer_order:
+                notify_buyer_order_status(buyer_order, new_status)
+
+            if new_status in ['completed', 'rejected', 'cancelled'] and buyer_order:
+                LiveStream.objects.filter(order=buyer_order, status='live').update(status='ended', ended_at=timezone.now())
+
             messages.success(request, 'Order status updated!')
     
     return redirect('cooks:orders')
@@ -379,7 +418,7 @@ def nearby_cooks(request):
     cooks_qs = CookProfile.objects.filter(
         latitude__isnull=False,
         longitude__isnull=False,
-        verification_status='approved',
+        is_verified=True,
     )
 
     if available_only:
@@ -551,3 +590,66 @@ def create_order(request):
     }
 
     return JsonResponse(response_data, status=201)
+
+
+@login_required
+def order_go_live(request, pk):
+    """Start or stop a live stream for this order (toggle)."""
+    if request.user.user_type != 'cook':
+        messages.error(request, 'Access denied.')
+        return redirect('buyers:home')
+    cook_profile = get_object_or_404(CookProfile, user=request.user)
+    cook_order = get_object_or_404(CookOrder, pk=pk, meal__cook=cook_profile)
+
+    # Only allow for accepted/preparing
+    if cook_order.status not in ['accepted', 'preparing']:
+        messages.error(request, 'Can only go live for accepted/preparing orders.')
+        return redirect('cooks:orders')
+
+    # Resolve matching BuyerOrder (BuyerOrder and CookOrder use separate IDs).
+    order = BuyerOrder.objects.filter(
+        buyer=cook_order.buyer,
+        cook=cook_profile,
+        meal=cook_order.meal,
+        pickup_slot=cook_order.pickup_slot,
+        quantity=cook_order.quantity,
+    ).order_by('-created_at').first()
+
+    # Backfill if missing, so live streaming always works for cook orders.
+    if order is None:
+        order = BuyerOrder.objects.create(
+            buyer=cook_order.buyer,
+            cook=cook_profile,
+            meal=cook_order.meal,
+            pickup_slot=cook_order.pickup_slot,
+            quantity=cook_order.quantity,
+            total_amount=cook_order.total_amount,
+            status=cook_order.status,
+            payment_method='cash',
+            special_instructions=cook_order.special_instructions,
+        )
+
+    # Check if already live
+    stream = LiveStream.objects.filter(order=order, status='live').first()
+    if stream:
+        # Stop live
+        stream.end()
+        messages.success(request, 'Live stream stopped for this order.')
+        return redirect('cooks:orders')
+    else:
+        # Start live
+        # End any existing live streams for this order
+        LiveStream.objects.filter(order=order, status='live').update(status='ended', ended_at=timezone.now())
+
+        channel = f'order-{order.id}-cook-{cook_profile.id}'
+        stream = LiveStream.objects.create(
+            cook=cook_profile,
+            order=order,
+            title=f'Live Cooking for Order #{order.id}',
+            description=f'Live cooking for {order.meal.name}',
+            status='live',
+            playback_url=f'agora://order-{order.id}-cook-{cook_profile.id}',
+            started_at=timezone.now(),
+        )
+        messages.success(request, 'Live stream started for this order.')
+        return redirect(f"/live/cook/manage/?order={order.id}")

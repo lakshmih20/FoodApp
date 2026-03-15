@@ -16,6 +16,7 @@ urlpatterns = [
     path('buyers/', include('apps.buyers.urls')),
     path('admin-panel/', include('apps.admin_panel.urls')),
     path('payments/', include('apps.payments.urls')),
+    path('', include('apps.live_streaming.urls')),
 ]
 
 # Serve media files in development

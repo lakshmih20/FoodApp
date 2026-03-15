@@ -47,6 +47,9 @@ class PickupSlot(models.Model):
     date = models.DateField()
     start_time = models.TimeField()
     end_time = models.TimeField()
+    cooking_started = models.BooleanField(default=False)
+    cutoff_time = models.TimeField(null=True, blank=True)
+    live_stream = models.OneToOneField('live_streaming.LiveStream', on_delete=models.SET_NULL, null=True, blank=True)
     max_quantity = models.IntegerField(default=10)
     available_quantity = models.IntegerField(default=10)
     is_active = models.BooleanField(default=True)
@@ -107,7 +110,7 @@ class CookReview(models.Model):
     order = models.OneToOneField(CookOrder, on_delete=models.CASCADE, related_name='review')
     rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
     comment = models.TextField()
-    sentiment_score = models.DecimalField(max_digits=5, decimal_places=4, null=True, blank=True)
+    # Sentiment analysis removed
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:

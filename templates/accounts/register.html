@@ -344,7 +344,18 @@
                     
                     <div class="form-group">
                         <label class="form-label">I am a:</label>
-                        {{ form.user_type }}
+                        <ul>
+                            <li>
+                                <label>
+                                    <input type="radio" name="user_type" value="buyer" {% if form.user_type.value == 'buyer' %}checked{% endif %}> Buyer
+                                </label>
+                            </li>
+                            <li>
+                                <label>
+                                    <input type="radio" name="user_type" value="cook" {% if form.user_type.value == 'cook' %}checked{% endif %}> Cook
+                                </label>
+                            </li>
+                        </ul>
                         {% if form.user_type.errors %}
                             <div class="form-error">{{ form.user_type.errors.0 }}</div>
                         {% endif %}
@@ -417,16 +428,23 @@
     </div>
 
     <script>
-document.addEventListener('DOMContentLoaded', function() {
-    function toggleCookFields() {
-        var cookFields = document.getElementById('cook-location-fields');
-        var cookRadio = document.querySelector('input[type=radio][value="cook"]');
-        if (cookRadio && cookRadio.checked) {
-            cookFields.style.display = 'block';
-        } else {
-            cookFields.style.display = 'none';
-        }
+function toggleCookFields() {
+    const cookFields = document.getElementById('cook-location-fields');
+    const isCook = document.querySelector('input[name="user_type"][value="cook"]').checked;
+    if (cookFields) {
+        cookFields.style.display = isCook ? 'block' : 'none';
     }
+    const addressField = document.getElementById('id_address');
+    const cityField = document.getElementById('id_city');
+    const stateField = document.getElementById('id_state');
+    const pincodeField = document.getElementById('id_pincode');
+    if (addressField) addressField.required = isCook;
+    if (cityField) cityField.required = isCook;
+    if (stateField) stateField.required = isCook;
+    if (pincodeField) pincodeField.required = isCook;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
     toggleCookFields();
     document.querySelectorAll('input[name="user_type"]').forEach(function(radio) {
         radio.addEventListener('change', toggleCookFields);

@@ -58,7 +58,7 @@ class CookOrderAdmin(admin.ModelAdmin):
 
 @admin.register(CookReview)
 class CookReviewAdmin(admin.ModelAdmin):
-    list_display = ('order', 'rating', 'sentiment_score', 'created_at')
+    list_display = ('order', 'rating', 'created_at')
     list_filter = ('rating', 'created_at')
 
 

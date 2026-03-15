@@ -86,8 +86,7 @@ class BuyerReview(models.Model):
     # Food photo
     food_photo = models.ImageField(upload_to='review_food_photos/', blank=True, null=True)
     
-    # Sentiment analysis
-    sentiment_score = models.DecimalField(max_digits=5, decimal_places=4, null=True, blank=True)
+    # Sentiment analysis removed
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:

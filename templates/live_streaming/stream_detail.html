@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ stream.title }} - Live Cooking{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="mb-2">{{ stream.title }}</h4>
+                <p class="text-muted">By {{ stream.cook.user.username }}</p>
+
+                {% if stream.status == 'live' %}
+                    {% if agora_enabled %}
+                        <div id="local-player" style="width: 100%; height: 500px; background: #000; border-radius: 8px;"></div>
+                        <div class="small text-muted mt-2" id="videoStatus">Waiting for broadcaster...</div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            Video service not configured. Chat is still working.
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-warning">
+                        This stream is not live right now.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Live Chat</h5>
+                <span class="badge bg-primary" id="viewerCount">0</span>
+            </div>
+            <div class="card-body" style="height: 420px; overflow-y: auto;" id="chatMessages">
+                {% for message in recent_messages %}
+                    <div class="mb-2">
+                        <strong>{{ message.user.username }}{% if message.user.user_type == 'cook' %} (Cook){% endif %}</strong>: {{ message.message }}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="card-footer">
+                <form id="chatForm">
+                    <div class="input-group">
+                        <input type="text" id="chatInput" class="form-control" placeholder="Ask a question..." {% if stream.status != 'live' %}disabled{% endif %}>
+                        <button class="btn btn-primary" type="submit" {% if stream.status != 'live' %}disabled{% endif %}>Send</button>
+                    </div>
+                </form>
+                <div class="small text-muted mt-2" id="chatError"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="liveChatConfig"
+     data-stream-id="{{ stream.id }}"
+    data-stream-status="{{ stream.status }}"
+    data-agora-enabled="{% if agora_enabled %}1{% else %}0{% endif %}">
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if agora_enabled %}
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.11.1.js"></script>
+{% endif %}
+<script src="{% static 'js/live_stream.js' %}"></script>
+{% endblock %}

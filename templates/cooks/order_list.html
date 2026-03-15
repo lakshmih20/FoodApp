@@ -68,6 +68,15 @@
                                         <button type="submit" class="btn btn-sm btn-success">Complete</button>
                                     </form>
                                 {% endif %}
+                                {% comment %} Live streaming actions {% endcomment %}
+                                {% if order.status == 'accepted' or order.status == 'preparing' %}
+                                    {% if order.live_stream %}
+                                        <a href="{% url 'cooks:order_go_live' order.pk %}" class="btn btn-sm btn-danger">Stop Live</a>
+                                        <span class="badge bg-success">Live &#x2705;</span>
+                                    {% else %}
+                                        <a href="{% url 'cooks:order_go_live' order.pk %}" class="btn btn-sm btn-primary">Go Live</a>
+                                    {% endif %}
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}

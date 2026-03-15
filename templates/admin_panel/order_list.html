@@ -1,56 +1,48 @@
-{% extends 'base.html' %}
+{% extends 'admin_panel/base_admin.html' %}
 
 {% block title %}Orders - HomeFood Connect{% endblock %}
 
-{% block content %}
-<div class="row mb-4">
-    <div class="col">
-        <h2><i class="bi bi-cart"></i> All Orders</h2>
-    </div>
-</div>
+{% block admin_content %}
+<h2 style="margin-bottom:16px;"><i class="bi bi-cart"></i> Orders</h2>
 
-<div class="mb-3">
-    <a href="?status=" class="btn btn-sm btn-outline-primary">All</a>
-    <a href="?status=pending" class="btn btn-sm btn-outline-warning">Pending</a>
-    <a href="?status=completed" class="btn btn-sm btn-outline-success">Completed</a>
+<form method="get" class="d-flex gap-2 mb-3">
+    <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by buyer name or order ID">
+    <button class="btn btn-success" type="submit">Search</button>
+</form>
+
+<div class="mb-3 d-flex gap-2 flex-wrap">
+    <a href="?" class="btn btn-sm {% if not status_filter %}btn-success{% else %}btn-outline-success{% endif %}" style="border-radius:999px;">All</a>
+    <a href="?status=pending&q={{ query }}" class="btn btn-sm {% if status_filter == 'pending' %}btn-success{% else %}btn-outline-success{% endif %}" style="border-radius:999px;">Pending</a>
+    <a href="?status=accepted&q={{ query }}" class="btn btn-sm {% if status_filter == 'accepted' %}btn-success{% else %}btn-outline-success{% endif %}" style="border-radius:999px;">Accepted</a>
+    <a href="?status=ready&q={{ query }}" class="btn btn-sm {% if status_filter == 'ready' %}btn-success{% else %}btn-outline-success{% endif %}" style="border-radius:999px;">Ready</a>
+    <a href="?status=collected&q={{ query }}" class="btn btn-sm {% if status_filter == 'collected' %}btn-success{% else %}btn-outline-success{% endif %}" style="border-radius:999px;">Collected</a>
 </div>
 
 <div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Order ID</th>
-                        <th>Buyer</th>
-                        <th>Meal</th>
-                        <th>Cook</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in orders %}
-                    <tr>
-                        <td>#{{ order.id }}</td>
-                        <td>{{ order.buyer.username }}</td>
-                        <td>{{ order.meal.name }}</td>
-                        <td>{{ order.cook.user.username }}</td>
-                        <td>₹{{ order.total_amount }}</td>
-                        <td><span class="badge bg-{% if order.status == 'completed' %}success{% elif order.status == 'pending' %}warning{% else %}info{% endif %}">{{ order.get_status_display }}</span></td>
-                        <td>{{ order.created_at|date:"M d, Y" }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm">
+            <thead><tr><th>Order ID</th><th>Buyer</th><th>Cook</th><th>Meal</th><th>Quantity</th><th>Total amount</th><th>Status</th><th>Order date</th></tr></thead>
+            <tbody>
+            {% for order in orders %}
+                <tr>
+                    <td>#{{ order.id }}</td>
+                    <td>{{ order.buyer.username }}</td>
+                    <td>{{ order.cook.user.username }}</td>
+                    <td>{{ order.meal.name }}</td>
+                    <td>{{ order.quantity }}</td>
+                    <td>₹{{ order.total_amount }}</td>
+                    <td>
+                        <span style="padding:4px 10px; border-radius:999px; font-size:12px; {% if order.status == 'pending' %}background:#FAEEDA;color:#633806;{% elif order.status == 'accepted' %}background:#EAF0FF;color:#2E4D91;{% elif order.status == 'ready' %}background:#EAF3DE;color:#27500A;{% else %}background:#EFEFEF;color:#333;{% endif %}">
+                            {% if order.status == 'completed' %}Collected{% else %}{{ order.get_status_display }}{% endif %}
+                        </span>
+                    </td>
+                    <td>{{ order.created_at|date:"d M Y H:i" }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="8" class="text-muted">No orders found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}
-
-
-
-
-
-

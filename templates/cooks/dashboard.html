@@ -8,12 +8,36 @@
         <h2><i class="bi bi-speedometer2"></i> Cook Dashboard</h2>
         <p class="text-muted">Welcome, {{ cook_profile.user.username }}!</p>
         {% if not cook_profile.is_verified %}
-            <div class="alert alert-warning mt-2">
-                <i class="bi bi-exclamation-triangle"></i> Your account is <strong>not verified</strong>. You cannot accept orders until verification is complete.
-            </div>
+            {% if cook_profile.verification_status == 'rejected' %}
+                <div class="alert alert-danger mt-2">
+                    <i class="bi bi-x-circle"></i> <strong>Verification Rejected.</strong>
+                    {% if cook_profile.certificate_rejection_reason %}
+                        Reason: {{ cook_profile.certificate_rejection_reason }}
+                    {% endif %}
+                    Please re-upload a valid FSSAI certificate to resubmit for verification.
+                    <div class="mt-2">
+                        <a href="{% url 'cooks:fssai_certificate_upload' %}" class="btn btn-danger btn-sm">
+                            <i class="bi bi-upload"></i> Re-upload FSSAI Certificate
+                        </a>
+                    </div>
+                </div>
+            {% elif cook_profile.fssai_certificate_status == 'not_submitted' or not cook_profile.fssai_certificate %}
+                <div class="alert alert-info mt-2">
+                    <i class="bi bi-info-circle"></i> <strong>Action Required:</strong> To get verified and start selling meals, you must upload your FSSAI certificate. Without it, your account cannot be approved.
+                    <div class="mt-2">
+                        <a href="{% url 'cooks:fssai_certificate_upload' %}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-upload"></i> Upload FSSAI Certificate
+                        </a>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-warning mt-2">
+                    <i class="bi bi-hourglass-split"></i> <strong>Under Review:</strong> Your FSSAI certificate has been submitted and is pending admin verification. You will be notified once approved.
+                </div>
+            {% endif %}
         {% else %}
             <div class="alert alert-success mt-2">
-                <i class="bi bi-shield-check"></i> Your account is <strong>verified</strong>! You can accept orders.
+                <i class="bi bi-shield-check"></i> Your account is <strong>verified</strong>! You can publish meals and accept orders.
             </div>
         {% endif %}
     </div>
@@ -100,9 +124,11 @@
                 <h5>Quick Actions</h5>
             </div>
             <div class="card-body">
+                {% if cook_profile.is_verified %}
                 <a href="{% url 'cooks:meal_create' %}" class="btn btn-primary w-100 mb-2">
                     <i class="bi bi-plus-circle"></i> Add New Meal
                 </a>
+                {% endif %}
                 <a href="{% url 'cooks:meals' %}" class="btn btn-secondary w-100 mb-2">
                     <i class="bi bi-list"></i> Manage Meals
                 </a>

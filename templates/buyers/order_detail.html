@@ -32,8 +32,12 @@
                     <div class="mb-4 pb-3 border-bottom">
                         <h6 class="fw-bold mb-2">📍 Pickup Location</h6>
                         <p class="mb-1">{{ order.cook.address }}<br>{{ order.cook.city }}, {{ order.cook.state }} {{ order.cook.pincode }}</p>
-                        {% if order.cook.latitude and order.cook.longitude %}
-                        <a href="https://maps.google.com/?q={{ order.cook.latitude }},{{ order.cook.longitude }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        {% if order.cook.address or order.cook.city or order.cook.state or order.cook.pincode %}
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ order.cook.address|add:', '|add:order.cook.city|add:', '|add:order.cook.state|add:' '|add:order.cook.pincode|urlencode }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-geo-alt"></i> View on Google Maps
+                        </a>
+                        {% elif order.cook.latitude and order.cook.longitude %}
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ order.cook.latitude }},{{ order.cook.longitude }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-geo-alt"></i> View on Google Maps
                         </a>
                         {% endif %}
@@ -66,7 +70,7 @@
                         <h6 class="fw-bold mb-2">✅ Order Completed!</h6>
                         <p class="mb-2">Thank you for your purchase! Please share your experience to help us improve and assist other customers.</p>
                         {% if not has_review %}
-                        <a href="{% url 'buyers:add_review' order.pk %}" class="btn btn-success btn-lg">
+                        <a href="{% url 'buyers:add_review' order.pk %}" class="btn" style="background:#2fb463;color:#fff;border:none;border-radius:14px;padding:12px 24px;font-size:16px;font-weight:600;display:inline-flex;align-items:center;gap:8px;box-shadow:none;">
                             <i class="bi bi-star"></i> Add Your Review
                         </a>
                         {% else %}
@@ -84,6 +88,22 @@
                         <i class="bi bi-info-circle"></i> You can add a review once the order is completed.
                     </div>
                     {% endif %}
+
+                    <!-- Live Cooking Section -->
+                    <div class="mb-4 pb-3 border-bottom">
+                        <h6 class="fw-bold mb-2">🎥 Live Cooking</h6>
+                        {% if live_stream and order.status == 'accepted' or live_stream and order.status == 'preparing' or live_stream and order.status == 'ready' %}
+                            <a href="{% url 'live_streaming:stream_detail' live_stream.id %}" class="btn btn-success">
+                                <i class="bi bi-camera-video"></i> Watch Live
+                            </a>
+                            <p class="text-muted small mt-2 mb-0">Your cook is live. Tap to watch.</p>
+                        {% elif order.status == 'accepted' or order.status == 'preparing' or order.status == 'ready' %}
+                            <span class="badge bg-secondary">Not live yet</span>
+                            <p class="text-muted small mt-2 mb-0">Live option appears when the cook starts streaming.</p>
+                        {% else %}
+                            <span class="badge bg-secondary">Live option available when order is accepted or preparing</span>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>

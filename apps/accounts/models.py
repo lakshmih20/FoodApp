@@ -33,6 +33,11 @@ class UserProfile(models.Model):
     pincode = models.CharField(max_length=10, blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    saved_lat = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    saved_lng = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    saved_location_name = models.CharField(max_length=200, blank=True)
+    saved_pincode = models.CharField(max_length=10, blank=True)
+    recent_locations = models.JSONField(default=list, blank=True)
     dietary_preferences = models.JSONField(default=list, blank=True)  # ['vegetarian', 'vegan', etc.]
     profile_image = models.ImageField(upload_to='profile_images/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -46,7 +51,7 @@ class CookProfile(models.Model):
     """Cook profile for home cooks"""
     VERIFICATION_STATUS = [
         ('pending', 'Pending'),
-        ('approved', 'Approved'),
+        ('verified', 'Verified'),
         ('rejected', 'Rejected'),
     ]
     
@@ -68,6 +73,7 @@ class CookProfile(models.Model):
     # Whether the cook is currently available to accept new pickup orders
     is_available_now = models.BooleanField(default=False)
     verification_status = models.CharField(max_length=20, choices=VERIFICATION_STATUS, default='pending')
+    is_verified = models.BooleanField(default=False)
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
     total_reviews = models.IntegerField(default=0)
     profile_image = models.ImageField(upload_to='profile_images/', blank=True, null=True)
@@ -89,8 +95,7 @@ class CookProfile(models.Model):
     def __str__(self):
         return f"{self.user.username}'s Cook Profile"
     
-    def is_verified(self):
-        return self.verification_status == 'approved'
+    
 
 
 

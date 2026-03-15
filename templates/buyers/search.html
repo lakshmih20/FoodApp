@@ -9,6 +9,23 @@
         {% if query or location %}
             <p class="text-muted">Results for "{{ query }}" {% if location %}near {{ location }}{% endif %}</p>
         {% endif %}
+        {% if active_location %}
+            <p class="text-muted mb-2">Showing nearby meals around {{ active_location.location_name }} within {{ selected_radius }} km.</p>
+        {% endif %}
+        <div class="d-flex gap-2 flex-wrap mb-3">
+            {% for r in radius_options %}
+                <a href="?q={{ query }}&radius={{ r }}" class="btn btn-sm {% if selected_radius == r %}btn-success{% else %}btn-outline-success{% endif %}" style="border-radius:999px;">{{ r }} km</a>
+            {% endfor %}
+            {% if active_location %}
+                <a href="?q={{ query }}&show_all=1" class="btn btn-sm btn-outline-secondary" style="border-radius:999px;">Show all meals</a>
+            {% endif %}
+        </div>
+        {% if location_applied and not meals %}
+            <div class="alert alert-info">
+                No meals found near you. Try increasing the search radius.
+                <a href="?q={{ query }}&show_all=1" class="btn btn-sm btn-outline-success ms-2">Show all meals</a>
+            </div>
+        {% endif %}
     </div>
 </div>
 
@@ -24,6 +41,9 @@
                 <p class="card-text">{{ meal.description|truncatewords:10 }}</p>
                 <p class="card-text"><strong>₹{{ meal.price }}</strong></p>
                 <p class="card-text"><small class="text-muted">By {{ meal.cook.user.username }}</small></p>
+                {% if meal.distance_km is not None %}
+                <span class="badge bg-success-subtle text-success">{{ meal.distance_km }} km away</span>
+                {% endif %}
             </div>
             <div class="card-footer">
                 <a href="{% url 'buyers:meal_detail' meal.pk %}" class="btn btn-primary btn-sm w-100">View Details</a>

@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Go Live - HomeFood Connect{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-camera-video"></i> Go Live</h2>
+    <p class="text-muted mb-0">Start or manage your live cooking stream.</p>
+</div>
+
+{# Debug: show order context and stream linkage #}
+{% if request.GET.order %}
+<div class="alert alert-info">Order context: <strong>#{{ request.GET.order }}</strong></div>
+{% else %}
+<div class="alert alert-secondary">No order parameter in URL. Streams started here won't link to a buyer order.</div>
+{% endif %}
+
+{% if active_stream %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Active Stream</h5>
+            <p class="mb-1"><strong>Title:</strong> {{ active_stream.title }}</p>
+            <p class="mb-1"><strong>Status:</strong> {{ active_stream.get_status_display }}</p>
+            <p class="mb-1"><strong>Started:</strong> {{ active_stream.started_at }}</p>
+            <p class="mb-3"><strong>Viewers:</strong> {{ active_stream.current_viewers }}</p>
+            <div class="alert alert-warning">
+                <strong>Linked Order:</strong>
+                {% if active_stream.order %}
+                    #{{ active_stream.order.id }}
+                {% else %}
+                    <span class="text-danger">None</span> — start the stream from the cook's order list "Go Live" button to link it.
+                {% endif %}
+            </div>
+            <a href="{% url 'live_streaming:stream_detail' active_stream.id %}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary me-2">
+                View Stream Page
+            </a>
+            <span class="small text-muted ms-1">(opens in new tab so your stream keeps running)</span>
+            <form method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" name="stop_stream" class="btn btn-danger">
+                    End Stream
+                </button>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h5>Start a New Stream</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                {{ form.title }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                {{ form.description }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Playback URL (HLS)</label>
+                {{ form.playback_url }}
+                <small class="text-muted">Example: AWS IVS playback URL. This is public.</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Ingest URL (OBS)</label>
+                {{ form.ingest_url }}
+                <small class="text-muted">Private URL used by your streaming software.</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Stream Key</label>
+                {{ form.stream_key }}
+                <small class="text-muted">Keep this secret. Do not share with viewers.</small>
+            </div>
+            <button type="submit" class="btn btn-primary me-2">Start Stream</button>
+            <button type="submit" name="auto_generate" class="btn btn-outline-primary">Auto-generate with AWS IVS</button>
+        </form>
+    </div>
+</div>
+{% if active_stream and active_stream.playback_url|slice:":8" == "agora://" %}
+<div class="card mt-4">
+    <div class="card-header">
+        <h5>Broadcast Controls</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <strong>Important:</strong> After starting your stream, you must click <b>Publish Live</b> to begin broadcasting your video to buyers.
+        </div>
+        <input type="hidden" id="activeStreamId" value="{{ active_stream.id }}">
+        <div id="local-preview" style="width:100%; height:360px; background:#000; border-radius:8px;"></div>
+        <div class="mt-2">
+            <button id="startPublish" class="btn btn-success me-2">Publish Live</button>
+            <button id="stopPublish" class="btn btn-outline-danger">Stop Publishing</button>
+            <span class="small text-muted ms-3" id="publishStatus">Not publishing</span>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+    {% if active_stream and active_stream.playback_url|slice:":8" == "agora://" %}
+        <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.11.1.js"></script>
+        <script>
+            function loadCookPublishWhenAgoraReady() {
+                if (window.AgoraRTC) {
+                    var script = document.createElement('script');
+                    script.src = "{% static 'js/cook_publish.js' %}";
+                    document.body.appendChild(script);
+                } else {
+                    setTimeout(loadCookPublishWhenAgoraReady, 100);
+                }
+            }
+            loadCookPublishWhenAgoraReady();
+        </script>
+    {% endif %}
+{% endblock %}

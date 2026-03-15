@@ -1,63 +1,44 @@
-{% extends 'base.html' %}
+{% extends 'admin_panel/base_admin.html' %}
 
-{% block title %}Cook Verification - HomeFood Connect{% endblock %}
+{% block title %}Pending Verifications - HomeFood Connect{% endblock %}
 
-{% block content %}
-<div class="row mb-4">
-    <div class="col">
-        <h2><i class="bi bi-shield-check"></i> Cook Verification</h2>
-    </div>
-</div>
+{% block admin_content %}
+<h2 style="margin-bottom:16px;"><i class="bi bi-shield-check"></i> Pending Cook Verifications</h2>
 
 <div class="card">
-    <div class="card-body">
-        {% if pending_cooks %}
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Username</th>
-                            <th>Email</th>
-                            <th>Location</th>
-                            <th>FSSAI Certificate</th>
-                            <th>FSSAI Number</th>
-                            <th>Applied On</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for cook in pending_cooks %}
-                        <tr>
-                            <td>{{ cook.user.username }}</td>
-                            <td>{{ cook.user.email }}</td>
-                            <td>{{ cook.city }}, {{ cook.state }}</td>
-                            <td>
-                                {% if cook.fssai_certificate %}
-                                    <a href="{{ cook.fssai_certificate.url }}" target="_blank">View Certificate</a>
-                                {% else %}
-                                    <span class="text-muted">Not uploaded</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ cook.fssai_certificate_number|default:'-' }}</td>
-                            <td>{{ cook.created_at|date:"M d, Y" }}</td>
-                            <td>
-                                <a href="{% url 'admin_panel:verify_cook' cook.pk %}" class="btn btn-sm btn-success">Approve</a>
-                                <a href="{% url 'admin_panel:reject_cook' cook.pk %}" class="btn btn-sm btn-danger">Reject</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <p class="text-muted">No pending verifications.</p>
-        {% endif %}
+    <div class="card-body table-responsive">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Cook</th>
+                    <th>Registered</th>
+                    <th>Certificate</th>
+                    <th>FSSAI Number</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for cook in pending_cooks %}
+                <tr>
+                    <td>{{ cook.user.username }}</td>
+                    <td>{{ cook.created_at|date:"d M Y" }}</td>
+                    <td>
+                        {% if cook.fssai_certificate %}
+                            <img src="{{ cook.fssai_certificate.url }}" alt="certificate" style="width:60px; height:60px; border-radius:6px; object-fit:cover; border:1px solid #ddd;">
+                        {% else %}
+                            <span class="text-muted">No file</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ cook.fssai_certificate_number|default:'-' }}</td>
+                    <td>
+                        <a href="{% url 'admin_panel:cook_verification_review' cook.id %}" class="btn btn-sm" style="border-radius:999px; background:#EAF3DE; color:#27500A;">Open & Review</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-muted">No pending verifications.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}
-
-
-
-
-
-

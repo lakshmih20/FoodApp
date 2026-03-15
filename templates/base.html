@@ -91,6 +91,7 @@
             gap: 30px;
             margin: 0;
             padding: 0;
+            flex-wrap: nowrap;
         }
         
         .inner-nav .nav-menu li a {
@@ -99,6 +100,7 @@
             font-weight: 500;
             font-size: 15px;
             transition: color 0.3s ease;
+            white-space: nowrap;
         }
         
         .inner-nav .nav-menu li a:hover {
@@ -372,36 +374,58 @@
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="inner-nav">
+    <nav class="{% if user.is_authenticated and user.user_type == 'buyer' %}foodied-nav{% else %}inner-nav{% endif %}">
         <div class="nav-container">
             <a href="{% url 'buyers:home' %}" class="nav-logo">
                 <i class="fas fa-utensils"></i>
-                HomeFood
+                <span>HomeFood</span>
             </a>
             
-            <ul class="nav-menu">
-                <li><a href="{% url 'buyers:home' %}">Home</a></li>
-                <li><a href="{% url 'buyers:search' %}">Search</a></li>
+            <ul class="nav-menu" {% if user.is_authenticated and user.user_type == 'buyer' %}id="navMenu"{% endif %}>
+                {% if not user.is_authenticated or user.user_type == 'buyer' %}
+                    <li><a href="{% url 'buyers:home' %}">Home</a></li>
+                    <li><a href="{% url 'buyers:home' %}#menu">Menu</a></li>
+                    <li><a href="{% url 'buyers:home' %}#about">About Us</a></li>
+                    <li><a href="{% url 'buyers:home' %}#how-it-works">How It Works</a></li>
+                {% endif %}
                 {% if user.is_authenticated %}
                     {% if user.user_type == 'cook' %}
                         <li><a href="{% url 'cooks:dashboard' %}">Dashboard</a></li>
                         <li><a href="{% url 'cooks:meals' %}">My Meals</a></li>
                         <li><a href="{% url 'cooks:orders' %}">Orders</a></li>
+                        <li><a href="{% url 'live_streaming:stream_list' %}">Live</a></li>
                     {% elif user.user_type == 'buyer' %}
                         <li><a href="{% url 'buyers:orders' %}">My Orders</a></li>
-                        <li><a href="{% url 'buyers:favorites' %}">Favorites</a></li>
                     {% elif user.user_type == 'admin' %}
-                        <li><a href="{% url 'admin_panel:dashboard' %}">Admin</a></li>
+                        <li><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
+                        <li><a href="{% url 'admin_panel:user_list' %}">Users</a></li>
+                        <li><a href="{% url 'admin_panel:meal_list' %}">Meals</a></li>
+                        <li><a href="{% url 'admin_panel:order_list' %}">Orders</a></li>
+                        <li><a href="{% url 'admin_panel:dispute_list' %}">Disputes</a></li>
                     {% endif %}
                 {% endif %}
             </ul>
             
             <div class="nav-actions">
                 {% if user.is_authenticated %}
+                    {% if user.user_type == 'buyer' %}
+                    <a href="{% url 'buyers:search' %}" class="nav-icon" title="Search">
+                        <i class="fas fa-search"></i>
+                    </a>
+                    <a href="{% url 'accounts:profile' %}" class="nav-icon" title="Profile">
+                        <i class="fas fa-user"></i>
+                    </a>
+                    <a id="buyer-location-chip" href="javascript:void(0)" class="nav-btn-outline" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:2px solid #4CAF50;border-radius:25px;color:#4CAF50;text-decoration:none;font-weight:600;">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span id="buyer-location-label">{% if buyer_active_location %}{{ buyer_active_location.location_name|default:'Set Location' }}{% else %}Set Location{% endif %}</span>
+                        <i class="fas fa-caret-down"></i>
+                    </a>
+                    {% else %}
                     <a href="{% url 'accounts:profile' %}" class="nav-btn-outline">
                         <i class="fas fa-user"></i> Profile
                     </a>
                     <a href="{% url 'accounts:logout' %}" class="nav-btn">Logout</a>
+                    {% endif %}
                 {% else %}
                     <a href="{% url 'accounts:login' %}" class="nav-btn-outline">Login</a>
                     <a href="{% url 'accounts:register' %}" class="nav-btn">Sign Up</a>
@@ -448,6 +472,14 @@
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% if user.is_authenticated and user.user_type == 'buyer' %}
+    <div id="buyerNotificationConfig" data-user-id="{{ user.id }}"></div>
+    <div id="buyerNotificationToasts" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1200;"></div>
+    {% include 'buyers/location_modals.html' %}
+    <script src="{% static 'js/buyer_location.js' %}"></script>
+    <script src="{% static 'js/buyer_notifications.js' %}"></script>
+    {% endif %}
     {% block extra_js %}{% endblock %}
 </body>
 </html>

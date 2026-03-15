@@ -302,10 +302,14 @@
         </div>
         
         <!-- Action Button -->
-        <div class="text-center mt-4">
+        <div class="text-center mt-4" style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
             <a href="{% url 'accounts:edit_profile' %}" class="edit-profile-btn">
                 <i class="fas fa-edit"></i>
                 Edit Profile
+            </a>
+            <a href="{% url 'accounts:logout' %}" class="edit-profile-btn" style="background:linear-gradient(135deg,#e53935,#ef5350);">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
             </a>
         </div>
         {% else %}

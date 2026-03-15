@@ -26,7 +26,23 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-this-in-production'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = [
+    host.strip() for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+    if host.strip()
+]
+ALLOWED_HOSTS.append('testserver')
+ALLOWED_HOSTS.append('192.168.1.3')  # Added for external access from phone
+# Allow LAN access for mobile testing (phone on same Wi‑Fi)
+# When you change WiFi, add your new PC IP here and to CSRF_TRUSTED_ORIGINS below.
+if DEBUG:
+    for extra in ('10.57.61.48', '172.25.64.1', '192.168.1.3', '192.168.1.4'):
+        if extra not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(extra)
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() for origin in os.getenv('CSRF_TRUSTED_ORIGINS', 'http://10.57.61.48:8000,http://192.168.1.3:8000,http://192.168.1.4:8000').split(',')
+    if origin.strip()
+]
 
 
 # Application definition
@@ -38,14 +54,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     # Custom apps
     'apps.accounts',
     'apps.cooks',
     'apps.buyers',
     'apps.admin_panel',
     'apps.payments',
-    'apps.ml_engine',
+    
     'apps.notifications',
+    'apps.live_streaming',
+        # Removed 'apps.ml_engine' to fix ModuleNotFoundError
+        # 'apps.ml_engine',
 ]
 
 MIDDLEWARE = [
@@ -79,6 +99,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'homefood.wsgi.application'
+ASGI_APPLICATION = 'homefood.asgi.application'
 
 
 # Database
@@ -178,4 +199,43 @@ RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET', '')
 # MSG91 Settings
 MSG91_AUTH_KEY = os.getenv('MSG91_AUTH_KEY', '')
 MSG91_SENDER_ID = os.getenv('MSG91_SENDER_ID', '')
+
+# Live Streaming (AWS IVS or Agora) - keep secrets in .env
+LIVE_STREAM_PROVIDER = os.getenv('LIVE_STREAM_PROVIDER', 'aws_ivs')
+AWS_IVS_PLAYBACK_BASE_URL = os.getenv('AWS_IVS_PLAYBACK_BASE_URL', '')
+AWS_IVS_INGEST_BASE_URL = os.getenv('AWS_IVS_INGEST_BASE_URL', '')
+AWS_REGION= os.getenv('AWS_REGION', 'ap-south-1')
+AGORA_APP_ID = os.getenv('AGORA_APP_ID', '')
+AGORA_APP_CERTIFICATE = os.getenv('AGORA_APP_CERTIFICATE', '')
+
+# Django Channels (needed for live-stream WebSocket chat)
+REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/0')
+# Use in-memory layer in development so chat works without Redis; use Redis in production.
+if DEBUG:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                'hosts': [('127.0.0.1', 6379)],
+            },
+        },
+    }
+
+# Cache (used for chat rate limiting)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'live-streaming-cache',
+    }
+}
+
+# Live chat security controls
+LIVE_CHAT_MAX_MESSAGE_LENGTH = 500
+LIVE_CHAT_MIN_SECONDS_BETWEEN_MESSAGES = 2
 

@@ -40,24 +40,22 @@
                 <li><a href="#menu">Menu</a></li>
                 <li><a href="#about">About Us</a></li>
                 <li><a href="#how-it-works">How It Works</a></li>
-                {% if user.is_authenticated %}
-                    {% if user.user_type == 'cook' %}
-                    <li><a href="{% url 'cooks:dashboard' %}">Dashboard</a></li>
-                    {% elif user.user_type == 'buyer' %}
-                    <li><a href="{% url 'buyers:orders' %}">My Orders</a></li>
-                    {% endif %}
-                {% endif %}
+                <li><a href="{% url 'buyers:orders' %}">My Orders</a></li>
             </ul>
             
             <div class="nav-actions">
+                {% if user.is_authenticated %}
                 <a href="{% url 'buyers:search' %}" class="nav-icon" title="Search">
                     <i class="fas fa-search"></i>
                 </a>
-                {% if user.is_authenticated %}
                 <a href="{% url 'accounts:profile' %}" class="nav-icon" title="Profile">
                     <i class="fas fa-user"></i>
                 </a>
-                <a href="{% url 'accounts:logout' %}" class="nav-signup-btn">Logout</a>
+                <a id="buyer-location-chip" href="javascript:void(0)" class="nav-btn-outline" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:2px solid #4CAF50;border-radius:25px;color:#4CAF50;text-decoration:none;font-weight:600;">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span id="buyer-location-label">{% if buyer_active_location %}{{ buyer_active_location.location_name|default:'Set Location' }}{% else %}Set Location{% endif %}</span>
+                    <i class="fas fa-caret-down"></i>
+                </a>
                 {% else %}
                 <a href="{% url 'accounts:login' %}" class="nav-icon" title="Login">
                     <i class="fas fa-user"></i>
@@ -90,9 +88,6 @@
                     <a href="#menu" class="btn-primary-foodied">
                         Order Now <i class="fas fa-arrow-right"></i>
                     </a>
-                    <button id="find-nearby-meals" class="btn-primary-foodied" style="margin-left: 10px;">
-                        Find Meals Near Me <i class="fas fa-map-marker-alt"></i>
-                    </button>
                 </div>
             </div>
             
@@ -415,121 +410,16 @@
         });
 
     document.getElementById('find-nearby-meals').addEventListener('click', function() {
-        const errorDiv = document.getElementById('location-error-message');
-        errorDiv.style.display = 'none';
-        document.getElementById('manual-address-input').style.display = 'none';
-        // Custom message before requesting location
-        if (window.confirm('To find meals near you, we need access to your location. Do you want to allow location access?')) {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    function(position) {
-                        errorDiv.style.display = 'none';
-                        fetchNearbyMealsList(position.coords.latitude, position.coords.longitude);
-                    },
-                    function(error) {
-                        if (error.code === error.PERMISSION_DENIED) {
-                            errorDiv.textContent = 'Location access denied. Please enter your address below.';
-                            errorDiv.style.display = 'block';
-                            document.getElementById('manual-address-input').style.display = 'block';
-                        } else if (error.code === error.TIMEOUT) {
-                            errorDiv.textContent = 'Location request timed out. Please try again.';
-                            errorDiv.style.display = 'block';
-                        } else {
-                            errorDiv.textContent = 'Unable to retrieve your location. Please try again or enter your address.';
-                            errorDiv.style.display = 'block';
-                            document.getElementById('manual-address-input').style.display = 'block';
-                        }
-                    },
-                    {timeout: 10000}
-                );
-            } else {
-                errorDiv.textContent = 'Geolocation is not supported by your browser.';
-                errorDiv.style.display = 'block';
-                document.getElementById('manual-address-input').style.display = 'block';
-            }
-        } else {
-            errorDiv.textContent = 'Location access is required to find meals near you.';
-            errorDiv.style.display = 'block';
+        const modal = document.getElementById('locationModal');
+        const title = document.getElementById('location-modal-title');
+        if (title) {
+            title.textContent = 'Find meals near you';
+        }
+        if (modal) {
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
         }
     });
-
-    document.getElementById('submit-address').addEventListener('click', function() {
-        const errorDiv = document.getElementById('location-error-message');
-        errorDiv.textContent = 'Manual address lookup is not supported in this demo. Please use location access.';
-        errorDiv.style.display = 'block';
-    });
-
-    function fetchNearbyMealsList(lat, lng) {
-        // Show the Meals Near You section
-        document.getElementById('meals-nearby-section').style.display = 'block';
-        // Hide map, show featured meals grid
-        document.getElementById('nearby-meals-map').style.display = 'none';
-        const sectionHeader = document.querySelector('#meals-nearby-section .section-header .section-title');
-        if (sectionHeader) sectionHeader.textContent = 'Meals Near You';
-        // Target the "Meals Near You" grid
-        const grid = document.getElementById('nearby-meals-list');
-        grid.innerHTML = '<p>Loading nearby meals...</p>';
-        fetch('/buyers/api/nearby-meals/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({ latitude: lat, longitude: lng })
-        })
-        .then(response => response.text())
-        .then(text => {
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                grid.innerHTML = '<p>Server error: ' + text + '</p>';
-                return;
-            }
-            if (data.success && data.cooks.length > 0) {
-                grid.innerHTML = '';
-                data.cooks.forEach(cook => {
-                    const card = document.createElement('div');
-                    card.className = 'meal-card';
-                    card.innerHTML =
-                        `<b>${cook.name}</b><br>` +
-                        `${cook.meal_name}<br>` +
-                        (cook.price ? `Price: ₹${cook.price}<br>` : '') +
-                        `Distance: ${cook.distance_km} km<br>` +
-                        `<a href='/buyers/meal/${cook.meal_id}/' target='_blank'>View Meal</a> ` +
-                        `<button class='view-on-map-btn' data-lat='${cook.latitude}' data-lng='${cook.longitude}'>View on Map</button>`;
-                    grid.appendChild(card);
-                });
-            } else {
-                grid.innerHTML = '<p>No meals found nearby.</p>';
-            }
-        })
-        .catch((err) => {
-            grid.innerHTML = '<p>Error fetching nearby meals.</p>';
-        });
-    }
-
-    document.addEventListener('click', function(e) {
-        if (e.target && e.target.classList.contains('view-on-map-btn')) {
-            const lat = parseFloat(e.target.getAttribute('data-lat'));
-            const lng = parseFloat(e.target.getAttribute('data-lng'));
-            showSingleMealOnMap(lat, lng);
-        }
-    });
-
-    function showSingleMealOnMap(lat, lng) {
-        const mapDiv = document.getElementById('nearby-meals-map');
-        mapDiv.innerHTML = '';
-        mapDiv.style.display = 'block';
-        // Hide list
-        document.getElementById('nearby-meals-list').style.display = 'none';
-        const map = L.map(mapDiv).setView([lat, lng], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-        L.marker([lat, lng]).addTo(map).bindPopup('Meal Location').openPopup();
-    }
 
     // Helper to get CSRF token
     function getCookie(name) {
@@ -547,6 +437,9 @@
         return cookieValue;
     }
     </script>
+
+    {% include 'buyers/location_modals.html' %}
+    <script src="{% static 'js/buyer_location.js' %}"></script>
 
 </body>
 </html>

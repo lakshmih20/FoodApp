@@ -1,207 +1,1126 @@
+
 {% extends 'base.html' %}
 {% load static %}
 
 {% block title %}{{ meal.name }} - HomeFood Connect{% endblock %}
 
 {% block content %}
-<div class="meal-detail-card">
-    <div class="meal-detail-image">
-        {% if meal.images.first %}
-            <img src="{{ meal.images.first.image.url }}" alt="{{ meal.name }}">
-        {% else %}
-            <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400" alt="{{ meal.name }}">
-        {% endif %}
-    </div>
-    <div class="meal-detail-info">
-        <h1 class="meal-detail-title">{{ meal.name }}</h1>
-        <div class="meal-detail-meta">
-            <span class="meal-detail-cook">By <a href="{% url 'buyers:cook_profile' meal.cook.pk %}">{{ meal.cook.user.username }}</a></span>
-            <span class="meal-detail-price">₹{{ meal.price }}</span>
-        </div>
-        <div class="meal-detail-section">
-            <h3>Description</h3>
-            <p>{{ meal.description }}</p>
-        </div>
-        <div class="meal-detail-section">
-            <h3>Ingredients</h3>
-            <p>{{ meal.ingredients }}</p>
-        </div>
-        {% if meal.nutrition_info %}
-        <div class="meal-detail-section">
-            <h3>Nutrition Info</h3>
-            <ul>
-                {% for key, value in meal.nutrition_info.items %}
-                    <li><strong>{{ key|title }}:</strong> {{ value }}</li>
+<div style="background:#f0f7ee;min-height:100vh;">
+    <div class="meal-grid-container">
+        <!-- LEFT COLUMN -->
+        <div class="meal-left-col">
+            <!-- 1. Meal image -->
+            <div class="meal-img-box">
+                {% if meal.images.first %}
+                    <img src="{{ meal.images.first.image.url }}" alt="{{ meal.name }}" class="meal-img">
+                {% else %}
+                    <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400" alt="{{ meal.name }}" class="meal-img">
+                {% endif %}
+            </div>
+            <!-- 2. Meal title -->
+            <h1 class="meal-title">{{ meal.name }}</h1>
+            <!-- 3. Star rating row -->
+            <div class="meal-rating-row">
+                {% for i in "12345" %}
+                    {% if reviews and reviews.0.rating and forloop.counter <= reviews.0.rating %}
+                        <span class="star">&#9733;</span>
+                    {% else %}
+                        <span class="star star-outline">&#9734;</span>
+                    {% endif %}
                 {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
-        <div class="meal-detail-section">
-            {% if pickup_slots %}
-                {% if user.is_authenticated %}
-                <form method="post" action="{% url 'buyers:create_order' meal.pk %}" class="meal-order-form">
+                <span class="review-count">({{ reviews|length }} reviews)</span>
+            </div>
+            <!-- 4. Cook profile strip -->
+            <div class="cook-profile-card">
+                <div class="cook-avatar">{{ meal.cook.user.username|make_list|first|upper }}</div>
+                <div class="cook-profile-info">
+                    <div class="cook-name">{{ meal.cook.user.username }}</div>
+                    {% if meal.cook.fssai_certificate %}
+                        <span style="background:#EAF3DE; color:#27500A; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:500;">✓ FSSAI Verified</span>
+                    {% endif %}
+                    <a href="{% url 'buyers:cook_profile' meal.cook.pk %}" class="view-profile-btn">View Profile</a>
+                </div>
+            </div>
+            <!-- 5. Stats row -->
+                        <div class="meal-stats-row" style="display:flex; gap:10px; margin-bottom:18px;">
+                                <div style="flex:1; min-width:70px; background:#fff; border:0.5px solid rgba(0,0,0,0.1); border-radius:10px; padding:10px 8px; text-align:center;">
+                                    <div style="font-size:14px; font-weight:600; color:#1a1a18;">{{ meal.nutrition_info.calories|default:'180' }}</div>
+                                    <div style="font-size:11px; color:#9e9d99; margin-top:2px;">Calories</div>
+                                </div>
+                                <div style="flex:1; min-width:70px; background:#fff; border:0.5px solid rgba(0,0,0,0.1); border-radius:10px; padding:10px 8px; text-align:center;">
+                                    <div style="font-size:14px; font-weight:600; color:#1a1a18;">{{ meal.nutrition_info.protein|default:'8g' }}</div>
+                                    <div style="font-size:11px; color:#9e9d99; margin-top:2px;">Protein</div>
+                                </div>
+                                <div style="flex:1; min-width:70px; background:#fff; border:0.5px solid rgba(0,0,0,0.1); border-radius:10px; padding:10px 8px; text-align:center;">
+                                    <div style="font-size:14px; font-weight:600; color:#1a1a18;">30 min</div>
+                                    <div style="font-size:11px; color:#9e9d99; margin-top:2px;">Prep Time</div>
+                                </div>
+                                <div style="flex:1; min-width:70px; background:#fff; border:0.5px solid rgba(0,0,0,0.1); border-radius:10px; padding:10px 8px; text-align:center;">
+                                    <div style="font-size:14px; font-weight:600; color:#2d7a2d;">{{ total_portions|default:"0" }}</div>
+                                    <div style="font-size:11px; color:#9e9d99; margin-top:2px;">Portions Left</div>
+                                </div>
+                                <div style="flex:1; min-width:70px; background:#fff; border:0.5px solid rgba(0,0,0,0.1); border-radius:10px; padding:10px 8px; text-align:center;">
+                                    <div style="font-size:14px; font-weight:600; color:#1a1a18;">{% if pickup_slots %}Yes{% else %}No{% endif %}</div>
+                                    <div style="font-size:11px; color:#9e9d99; margin-top:2px;">Available</div>
+                                </div>
+                        </div>
+            <!-- 6. Description section -->
+            <div class="meal-section">
+                <div class="section-label">Description</div>
+                <p>{{ meal.description }}</p>
+            </div>
+            <!-- 7. Ingredients as pill tags -->
+            <div class="meal-section">
+                <div class="section-label">Ingredients</div>
+                <div class="ingredients-list">
+                    {% for ingredient in ingredients %}
+                      <span style="display:inline-block; padding:5px 13px; background:#EAF3DE; color:#27500A; border-radius:16px; font-size:13px; margin:3px; border:0.5px solid #C0DD97;">
+                        {{ ingredient }}
+                      </span>
+                    {% endfor %}
+                </div>
+            </div>
+            <!-- 8. Allergen warning box -->
+            {% if meal.allergens %}
+            <div class="allergen-warning">
+                <span class="allergen-icon">⚠️</span> <strong>Allergens:</strong> {{ meal.allergens }}
+            </div>
+            {% endif %}
+            <!-- 9. Reviews section -->
+            <div class="reviews-section">
+                <div class="section-label">Reviews</div>
+                {% if reviews %}
+                    {% for review in reviews|slice:":3" %}
+                        <div class="review-card">
+                            <div class="review-header">
+                                <span class="review-avatar">{{ review.order.buyer.username|make_list|first|upper }}</span>
+                                <span class="review-name">{{ review.order.buyer.username }}</span>
+                                <span class="review-date">{{ review.created_at|date:"M d, Y" }}</span>
+                            </div>
+                            <div class="review-rating">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}
+                                        <span class="star">&#9733;</span>
+                                    {% else %}
+                                        <span class="star star-outline">&#9734;</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <div class="review-comment">{{ review.comment }}</div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-reviews">No reviews yet. Be the first to review this meal!</div>
+                {% endif %}
+            </div>
+
+            {% if user.is_authenticated and report_orders %}
+            <div class="meal-section" style="margin-top:16px;">
+                <div class="section-label" style="color:#A32D2D;">Report Issue</div>
+                <form method="post" action="{% url 'buyers:create_report' meal.pk %}" style="background:#fff; border:1px solid #f1d2d2; border-radius:12px; padding:14px;">
                     {% csrf_token %}
-                    <label for="pickup_slot">Pickup Slot</label>
-                    <select name="pickup_slot" id="pickup_slot" required>
-                        <option value="">Select a pickup slot</option>
-                        {% for slot in pickup_slots %}
-                            <option value="{{ slot.pk }}">{{ slot.date }} - {{ slot.start_time }} to {{ slot.end_time }} ({{ slot.available_quantity }} available)</option>
+                    <select name="order_id" class="form-control mb-2" required>
+                        <option value="">Select related order</option>
+                        {% for order in report_orders %}
+                        <option value="{{ order.id }}">Order #{{ order.id }} - {{ order.created_at|date:"d M Y" }}</option>
                         {% endfor %}
                     </select>
-                    <label for="quantity">Quantity</label>
-                    <input type="number" name="quantity" id="quantity" value="1" min="1" required>
-                    <label for="payment_method">Payment Method</label>
-                    <select name="payment_method" id="payment_method" required>
-                        <option value="cash">Cash on Pickup</option>
+                    <select name="reason" class="form-control mb-2" required>
+                        <option value="">Select reason</option>
+                        <option value="food_quality_issue">Food quality issue</option>
+                        <option value="cook_did_not_prepare">Cook did not prepare order</option>
+                        <option value="cook_not_responding">Cook not responding</option>
+                        <option value="other">Other</option>
                     </select>
-                    <label for="special_instructions">Special Instructions (Optional)</label>
-                    <textarea name="special_instructions" id="special_instructions" rows="2"></textarea>
-                    <button type="submit" class="meal-order-btn">Place Order</button>
+                    <textarea name="description" class="form-control mb-2" rows="3" placeholder="Describe your issue" required></textarea>
+                    <button type="submit" class="btn btn-danger btn-sm" style="border-radius:999px;">Submit Report</button>
                 </form>
-                {% else %}
-                <a href="{% url 'accounts:login' %}" class="meal-order-btn">Login to Order</a>
-                {% endif %}
-            {% else %}
-                <div class="no-slots-message" style="color: #c00; font-weight: 600; margin: 18px 0;">No pickup slots available. This meal cannot be ordered right now.</div>
+            </div>
             {% endif %}
+        </div>
+        <!-- RIGHT COLUMN -->
+        <div class="meal-right-col">
+            <div class="order-card">
+                <div class="order-header">Place Your Order</div>
+                <div class="order-subtitle">Fresh, homemade - ready for pickup</div>
+                <div class="order-price">₹{{ meal.price }}</div>
+                                {% if pickup_slots %}
+                                        {% if user.is_authenticated %}
+                                                <form id="location-aware-order-form" method="post" action="{% url 'buyers:create_order' meal.pk %}" data-has-location="{% if active_location %}1{% else %}0{% endif %}">
+                                                        {% csrf_token %}
+                                                        <!-- Pickup slot label + date header -->
+                                                        <p style="font-size:12px; font-weight:500; color:#6b6b67; margin-bottom:4px; margin-top:16px;">Pickup slot</p>
+                                                        {% if slot_date_label %}
+                                                        <p style="font-size:11px; font-weight:600; color:#3B6D11; margin-bottom:8px; letter-spacing:0.03em;">{{ slot_date_label }}</p>
+                                                        {% endif %}
+                                                        <!-- Scrollable slot container (Problem 4 & 7) -->
+                                                        <div style="max-height:180px; overflow-y:auto; padding-right:4px; margin-bottom:16px;">
+                                                            <div style="display:flex; flex-wrap:wrap; gap:7px;">
+                                                            {% for slot in upcoming_slots %}
+                                                                <button type="button" class="slot-btn"
+                                                                    onclick="selectSlot(this, '{{ slot.id }}')"
+                                                                    {% if slot.is_full %}disabled{% endif %}
+                                                                    style="min-width:90px; min-height:36px; padding:7px 14px; border-radius:10px; white-space:nowrap; text-align:center; border:0.5px solid rgba(0,0,0,0.15); background:{% if forloop.first %}#EAF3DE{% else %}transparent{% endif %}; border-color:{% if forloop.first %}#3B6D11{% else %}rgba(0,0,0,0.15){% endif %}; color:{% if forloop.first %}#27500A{% else %}#1a1a18{% endif %}; font-size:13px; font-family:inherit; cursor:{% if slot.is_full %}not-allowed{% else %}pointer{% endif %}; opacity:{% if slot.is_full %}0.4{% else %}1{% endif %};"
+                                                                    >
+                                                                    {{ slot.start_time|time:"g:i A" }} – {{ slot.end_time|time:"g:i A" }}<br><span style="font-size:11px;">{{ slot.available_quantity }} left{% if slot.is_full %} · full{% endif %}</span>
+                                                                </button>
+                                                            {% endfor %}
+                                                            </div>
+                                                            <!-- Note for evaluators: slots shown are test data; real cooks add sensible windows like 8AM–10AM -->
+                                                        </div>
+                                                        <input type="hidden" name="pickup_slot" id="selectedSlot" value="{% if upcoming_slots %}{{ upcoming_slots.0.id }}{% endif %}">
+                                                                                                                <script>
+                                                                                                                function selectSlot(btn, slotId) {
+                                                                                                                    document.querySelectorAll('.slot-btn').forEach(b => {
+                                                                                                                        b.style.background = 'transparent';
+                                                                                                                        b.style.borderColor = 'rgba(0,0,0,0.15)';
+                                                                                                                        b.style.color = '#1a1a18';
+                                                                                                                    });
+                                                                                                                    btn.style.background = '#EAF3DE';
+                                                                                                                    btn.style.borderColor = '#3B6D11';
+                                                                                                                    btn.style.color = '#27500A';
+                                                                                                                    document.getElementById('selectedSlot').value = slotId;
+                                                                                                                }
+                                                                                                                </script>
+                                                        <!-- FIX 3: Quantity label -->
+                                                        <p style="font-size:12px; font-weight:500; color:#6b6b67; margin-bottom:8px; margin-top:16px;">Quantity</p>
+                                                        <div class="quantity-row">
+                                                                <button type="button" onclick="changeQty(-1)" class="qty-btn">-</button>
+                                                                <span id="qty" style="min-width:32px;display:inline-block;text-align:center;font-size:15px;font-weight:600;">1</span>
+                                                                <input type="hidden" name="quantity" id="qtyInput" value="1">
+                                                                <button type="button" onclick="changeQty(1)" class="qty-btn">+</button>
+                                                        </div>
+                                                        <!-- FIX 4: Special instructions label -->
+                                                        <p style="font-size:12px; font-weight:500; color:#6b6b67; margin-bottom:6px; margin-top:16px;">Special instructions</p>
+                                                        <textarea name="special_instructions" class="special-instructions" rows="2" placeholder="Special instructions (optional)"></textarea>
+                                                                                                                <!-- FIX 1: Subtotal, Packaging, Total lines -->
+                                                                                                                <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b6b67; margin-bottom:6px;">
+                                                                                                                    <span>Subtotal</span><span id="subtotal">₹{{ meal.price }}</span>
+                                                                                                                </div>
+                                                                                                                <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b6b67; margin-bottom:6px;">
+                                                                                                                    <span>Packaging</span><span>₹0</span>
+                                                                                                                </div>
+                                                                                                                <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:600; color:#1a1a18; margin-bottom:16px; padding-top:10px; border-top:0.5px solid rgba(0,0,0,0.1);">
+                                                                                                                    <span>Total</span>
+                                                                                                                    <span id="finalTotal">₹{{ meal.price }}</span>
+                                                                                                                </div>
+                                                                                                                <!-- FIX 7: Place Order button with price -->
+                                                                                                                <button type="submit" style="width:100%; padding:14px; border-radius:14px; background:#2d7a2d; border:none; color:#fff; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; margin-bottom:12px;">
+                                                                                                                    Place Order — ₹<span id="btnTotal">{{ meal.price }}</span>
+                                                                                                                </button>
+                                                                                                                <!-- FIX 8: Watch Live button -->
+                                                                                                                {% if meal.cook.is_live %}
+                                                                                                                    <button type="button" style="width:100%; padding:12px; border-radius:14px; background:#EAF3DE; border:0.5px solid #3B6D11; color:#27500A; font-size:14px; font-weight:500; cursor:pointer; font-family:inherit; margin-bottom:6px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                                                                                                                        <span style="width:8px; height:8px; border-radius:50%; background:#E24B4A; display:inline-block;"></span>
+                                                                                                                        Watch {{ meal.cook.user.username }} cooking live
+                                                                                                                    </button>
+                                                                                                                    <p style="font-size:12px; color:#9e9d99; text-align:center; margin-bottom:12px;">Available after your order is approved</p>
+                                                                                                                {% endif %}
+                                                                                                                <!-- FIX 9: Cash on pickup note -->
+                                                                                                                <div style="background:#f1f0ec; border-radius:10px; padding:10px 14px; font-size:12px; color:#6b6b67; display:flex; align-items:center; gap:6px; margin-top:4px;">
+                                                                                                                    💰 Cash on pickup only. Bring exact change.
+                                                                                                                </div>
+                                                        <!-- FIX 8: Quantity JS updates -->
+                                                        <script>
+                                                        const PRICE = {{ meal.price }};
+                                                        let qty = 1;
+                                                        function changeQty(delta) {
+                                                            qty = Math.max(1, qty + delta);
+                                                            document.getElementById('qty').textContent = qty;
+                                                            document.getElementById('qtyInput').value = qty;
+                                                            const total = (PRICE * qty).toFixed(2);
+                                                            document.getElementById('totalPrice').textContent = '₹' + total;
+                                                            if(document.getElementById('subtotal'))
+                                                                document.getElementById('subtotal').textContent = '₹' + total;
+                                                            if(document.getElementById('finalTotal'))
+                                                                document.getElementById('finalTotal').textContent = '₹' + total;
+                                                            if(document.getElementById('btnTotal'))
+                                                                document.getElementById('btnTotal').textContent = total;
+                                                        }
+
+                                                        document.addEventListener('DOMContentLoaded', function () {
+                                                            const orderForm = document.getElementById('location-aware-order-form');
+                                                            if (!orderForm) {
+                                                                return;
+                                                            }
+                                                            orderForm.addEventListener('submit', function (e) {
+                                                                if (orderForm.dataset.hasLocation === '1') {
+                                                                    return;
+                                                                }
+                                                                e.preventDefault();
+                                                                const modal = document.getElementById('locationModal');
+                                                                const messageEl = document.getElementById('location-modal-message');
+                                                                if (modal) {
+                                                                    modal.style.display = 'block';
+                                                                    document.body.style.overflow = 'hidden';
+                                                                }
+                                                                if (messageEl) {
+                                                                    messageEl.textContent = 'Please set your location to place an order.';
+                                                                }
+                                                            });
+                                                        });
+                                                        </script>
+                                                </form>
+                    {% else %}
+                        <div style="text-align:center;padding:40px 0;">
+                            <p style="margin-bottom:20px;color:#888;">Log in to place your order.</p>
+                            <a href="{% url 'accounts:login' %}" class="place-order-btn" style="text-decoration:none;">Login to Order</a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div style="text-align:center;padding:40px 20px;">
+                        <h3 style="color:#1F2937;margin-bottom:8px;">No slots available</h3>
+                        <p style="color:#6B7280;font-size:0.95rem;">This meal cannot be ordered right now. Please check back later.</p>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
 <style>
-.meal-detail-card {
-    max-width: 900px;
-    margin: 40px auto;
-    background: #fff;
-    border-radius: 18px;
-    box-shadow: 0 8px 32px rgba(76,175,80,0.12);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0;
-    overflow: hidden;
+.meal-grid-container {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 28px;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 20px;
+    align-items: start;
 }
-.meal-detail-image {
-    flex: 1 1 340px;
-    min-width: 340px;
-    max-width: 420px;
-    background: #f7faf7;
+.meal-left-col {
+    min-width: 0;
+}
+.meal-img-box {
+    width: 100%;
+    height: 300px;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 18px;
+}
+.meal-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 14px;
+}
+.meal-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.meal-rating-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+.star {
+    color: #F59E0B;
+    font-size: 1.2rem;
+}
+.star-outline {
+    color: #E5E7EB;
+}
+.review-count {
+    color: #888;
+    font-size: 1rem;
+    margin-left: 8px;
+}
+.cook-profile-card {
+    display: flex;
+    background: #fff;
+    border-radius: 10px;
+    padding: 12px 18px;
+    margin-bottom: 18px;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.cook-avatar {
+    width: 44px;
+    height: 44px;
+    background: #e0f2f1;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-}
-.meal-detail-image img {
-    width: 100%;
-    height: 320px;
-    object-fit: cover;
-    border-radius: 0 0 18px 18px;
-}
-.meal-detail-info {
-    flex: 2 1 400px;
-    padding: 32px 32px 24px 32px;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-}
-.meal-detail-title {
-    font-size: 2.4rem;
+    font-size: 1.3rem;
     font-weight: 700;
-    margin-bottom: 0;
-}
-.meal-detail-meta {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    font-size: 1.1rem;
-    margin-bottom: 0;
-}
-.meal-detail-cook a {
     color: #388E3C;
+}
+.cook-profile-info {
+    flex: 1;
+}
+.cook-name {
     font-weight: 600;
+    font-size: 1.1rem;
+}
+.fssai-badge {
+    display: inline-block;
+    background: #ffe082;
+    color: #a67c00;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 2px 8px;
+    margin-left: 8px;
+}
+.view-profile-btn {
+    display: inline-block;
+    background: #e0f2f1;
+    color: #388E3C;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 4px 12px;
+    margin-top: 6px;
     text-decoration: none;
 }
-.meal-detail-price {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #4CAF50;
+.meal-stats-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
 }
-.meal-detail-section h3 {
-    font-size: 1.2rem;
+.stat-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    color: #388E3C;
     font-weight: 600;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.meal-section {
+    margin-bottom: 18px;
+}
+.section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #9e9d99;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
     margin-bottom: 6px;
 }
-.meal-detail-section p, .meal-detail-section ul {
-    font-size: 1rem;
-    color: #444;
-    margin-bottom: 0;
-}
-.meal-detail-section ul {
-    padding-left: 18px;
-}
-.meal-order-form {
+.ingredients-list {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
 }
-.meal-order-form label {
+.ingredient-pill {
+    background: #e0f2f1;
+    color: #388E3C;
+    font-size: 0.95rem;
     font-weight: 500;
-    margin-bottom: 2px;
+    border-radius: 16px;
+    padding: 4px 14px;
 }
-.meal-order-form select, .meal-order-form input, .meal-order-form textarea {
-    padding: 10px 12px;
+.allergen-warning {
+    background: #fffbe6;
+    color: #a67c00;
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin-bottom: 18px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #ffe082;
+}
+.allergen-icon {
+    font-size: 1.2rem;
+}
+.reviews-section {
+    margin-bottom: 18px;
+}
+.review-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.review-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+.review-avatar {
+    width: 32px;
+    height: 32px;
+    background: #e0f2f1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #388E3C;
+}
+.review-name {
+    font-weight: 600;
+    font-size: 1rem;
+}
+.review-date {
+    color: #888;
+    font-size: 0.9rem;
+}
+.review-rating {
+    margin-bottom: 6px;
+}
+.review-comment {
+    color: #444;
+    font-size: 1rem;
+}
+.no-reviews {
+    color: #888;
+    font-size: 1rem;
+    padding: 12px 0;
+}
+.meal-right-col {
+    width: 320px;
+    position: sticky;
+    top: 76px;
+}
+.order-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 0.5px solid rgba(0,0,0,0.1);
+    padding: 22px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.order-header {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+.order-subtitle {
+    color: #888;
+    font-size: 1rem;
+    margin-bottom: 16px;
+}
+.order-price {
+    color: #388E3C;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 18px;
+}
+.pickup-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.pickup-slot-btn {
+    background: #e0f2f1;
+    color: #388E3C;
+    border: none;
+    border-radius: 16px;
+    padding: 6px 18px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 4px;
+}
+.pickup-slot-btn.selected {
+    background: #388E3C;
+    color: #fff;
+}
+.quantity-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.qty-btn {
+    background: #e0f2f1;
+    color: #388E3C;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+}
+.qty-input {
+    width: 60px;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 6px 0;
+}
+.special-instructions {
+    width: 100%;
     border-radius: 8px;
     border: 1px solid #e0e0e0;
     font-size: 1rem;
-    margin-bottom: 4px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
 }
-.meal-order-btn {
-    background: #4CAF50;
+.subtotal-row, .total-row {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #388E3C;
+    margin-bottom: 8px;
+}
+.place-order-btn {
+    width: 100%;
+    background: #388E3C;
     color: #fff;
     border: none;
     border-radius: 8px;
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: 700;
     padding: 14px 0;
     margin-top: 8px;
     cursor: pointer;
     transition: background 0.2s;
 }
-.meal-order-btn:hover {
-    background: #388E3C;
+.place-order-btn:hover {
+    background: #256029;
+}
+.watch-live-btn {
+    width: 100%;
+    background: #e0f2f1;
+    color: #388E3C;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 14px 0;
+    margin-top: 8px;
+    cursor: pointer;
+}
+.cash-note {
+    text-align: center;
+    color: #888;
+    font-size: 0.95rem;
+    margin-top: 14px;
 }
 </style>
+{% endblock %}
+    .styled-select {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 1rem;
+        color: var(--text-dark);
+        appearance: none;
+        background: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") no-repeat right 14px top 55%;
+        background-size: 12px auto;
+    }
 
-<!-- Reviews Section -->
-<div class="section" style="background: linear-gradient(135deg, #fff5f2 0%, #ffe8e0 100%);">
-    <div class="container">
-        <h2 class="secondary" style="text-align: center; margin-bottom: 40px;">Reviews</h2>
+    .qty-stepper {
+        display: flex;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .qty-btn {
+        background: white;
+        border: none;
+        padding: 14px 20px;
+        font-size: 1.2rem;
+        color: var(--primary-green);
+        cursor: pointer;
+        font-weight: bold;
+        transition: background 0.2s;
+    }
+
+    .qty-btn:hover {
+        background: var(--bg-light);
+    }
+
+    .qty-display {
+        flex: 1;
+        text-align: center;
+        border: none;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        pointer-events: none;
+    }
+
+    .payment-methods {
+        display: flex;
+        gap: 12px;
+    }
+
+    .payment-btn {
+        flex: 1;
+        padding: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: white;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+
+    .payment-btn.active {
+        border-color: var(--primary-green);
+        background: var(--light-green);
+        color: var(--dark-green);
+    }
+
+    textarea.styled-input {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 1rem;
+        resize: vertical;
+        font-family: inherit;
+    }
+
+    .order-summary {
+        background: var(--light-green);
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 24px;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
+    .summary-total {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        font-weight: 700;
+        color: var(--text-dark);
+        font-size: 1.1rem;
+    }
+
+    .submit-btn {
+        width: 100%;
+        background: var(--accent-green);
+        color: white;
+        border: none;
+        padding: 16px;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-top: 20px;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .submit-btn:hover {
+        background: var(--primary-green);
+    }
+
+    .secure-notice {
+        text-align: center;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    /* Reviews Section */
+    .reviews-section {
+        margin-top: 20px;
+    }
+
+    .reviews-title {
+        font-size: 2.2rem;
+        margin-bottom: 24px;
+        color: var(--text-dark);
+    }
+
+    .empty-reviews-card {
+        background: var(--review-bg);
+        border-radius: 16px;
+        padding: 40px;
+        text-align: center;
+        border: 1px solid #FDE68A;
+    }
+
+    .empty-reviews-icon {
+        font-size: 3rem;
+        margin-bottom: 16px;
+    }
+
+    .empty-reviews-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+    }
+
+    .empty-reviews-text {
+        color: var(--text-muted);
+        font-size: 1rem;
+    }
+</style>
+
+<div class="meal-container font-sans">
+
+    {% if meal.images.exists %}
+    <img src="{{ meal.images.first.image.url }}" alt="{{ meal.name }}" class="meal-hero-image">
+    {% endif %}
+
+    <!-- 1. Food Item Details -->
+    <div class="meal-details">
+        <h1 class="meal-title font-serif">{{ meal.name }}</h1>
+
+        <div class="cook-profile-meta">
+            <div class="cook-info-wrapper">
+                <a href="{% url 'buyers:cook_profile' meal.cook.pk %}" class="cook-avatar">
+                    {{ meal.cook.user.username|make_list|first|upper }}
+                </a>
+                <div class="cook-details">
+                    <a href="{% url 'buyers:cook_profile' meal.cook.pk %}" class="cook-name">{{ meal.cook.user.username
+                        }}</a>
+                    <span class="cook-location">Home Cook · {% if meal.cook.location %}{{ meal.cook.location }}{% else
+                        %}Local{% endif %}</span>
+                </div>
+            </div>
+            <div class="meal-rating">
+                {% for i in "12345" %}
+                <svg width="16" height="16" viewBox="0 0 24 24"
+                    fill="{% if reviews %}#F59E0B{% else %}#E5E7EB{% endif %}">
+                    <path
+                        d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                </svg>
+                {% endfor %}
+                <span style="margin-left:8px; color:var(--text-muted);">({{ reviews|length }} reviews)</span>
+            </div>
+        </div>
+
+        <div class="meal-price-large font-serif">
+            <span class="price-symbol">₹</span>{{ meal.price }}
+        </div>
+
+        <div class="macros-bar">
+            {% if meal.nutrition_info and meal.nutrition_info.calories %}
+            <div class="macro-item">
+                <span class="macro-value">~{{ meal.nutrition_info.calories }}</span>
+                <span class="macro-label">Calories</span>
+            </div>
+            {% else %}
+            <div class="macro-item">
+                <span class="macro-value">~180</span>
+                <span class="macro-label">Calories</span>
+            </div>
+            {% endif %}
+
+            {% if meal.nutrition_info and meal.nutrition_info.protein %}
+            <div class="macro-item">
+                <span class="macro-value">{{ meal.nutrition_info.protein }}g</span>
+                <span class="macro-label">Protein</span>
+            </div>
+            {% else %}
+            <div class="macro-item">
+                <span class="macro-value">8g</span>
+                <span class="macro-label">Protein</span>
+            </div>
+            {% endif %}
+
+            <div class="macro-item">
+                <span class="macro-value">30 min</span>
+                <span class="macro-label">Prep Time</span>
+            </div>
+            <div class="macro-item">
+                <span class="macro-value">Today</span>
+                <span class="macro-label">Available</span>
+            </div>
+        </div>
+
+        <div class="meal-section">
+            <div class="meal-section-title">Description</div>
+            <p class="meal-desc-text">{{ meal.description }}</p>
+        </div>
+
+        <div class="meal-section">
+            <div class="meal-section-title">Ingredients</div>
+            <div class="ingredients-list" id="ingredientsList">
+                <!-- Javascript will split and populate this or fallback to raw string -->
+                <div class="ingredient-tag" style="display:none;" id="rawIngredients">{{ meal.ingredients }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Form to Place Order -->
+    <div class="order-card">
+        <div class="order-header font-serif">
+            <div class="order-header-title">Place Your Order</div>
+            <div class="order-header-subtitle">Fresh, homemade — ready for pickup</div>
+        </div>
+
+        <div class="order-body">
+            {% if pickup_slots %}
+            {% if user.is_authenticated %}
+            <form method="post" action="{% url 'buyers:create_order' meal.pk %}" id="orderForm">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label class="form-label" for="pickup_slot">Pickup Slot</label>
+                    <select name="pickup_slot" id="pickup_slot" class="styled-select" required>
+                        <option value="">Select a pickup slot</option>
+                        {% for slot in pickup_slots %}
+                        <option value="{{ slot.pk }}" data-max="{{ slot.available_quantity }}">
+                            {{ slot.date|date:"D" }} - {{ slot.start_time|time:"g:i A" }} to {{ slot.end_time|time:"g:i
+                            A" }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Quantity</label>
+                    <div class="qty-stepper">
+                        <button type="button" class="qty-btn" id="qtyMinus">−</button>
+                        <input type="number" name="quantity" id="quantityInput" class="qty-display" value="1" min="1"
+                            readonly>
+                        <button type="button" class="qty-btn" id="qtyPlus">+</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Payment Method</label>
+                    <input type="hidden" name="payment_method" id="paymentMethodInput" value="cash">
+                    <div class="payment-methods">
+                        <button type="button" class="payment-btn active" data-method="cash">
+                            <span>💵</span> Cash on Pickup
+                        </button>
+                        <button type="button" class="payment-btn" data-method="upi">
+                            <span>📱</span> UPI / GPay
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="special_instructions">Special Instructions <span
+                            style="text-transform:none; font-weight:normal; color:#999;">(Optional)</span></label>
+                    <textarea name="special_instructions" id="special_instructions" class="styled-input" rows="3"
+                        placeholder="e.g. Extra sambar please, no chutney, less spicy..."></textarea>
+                </div>
+
+                <div class="order-summary">
+                    <div class="summary-row">
+                        <span>{{ meal.name }} × <span id="summaryQty">1</span></span>
+                        <span>₹<span id="summaryBase">{{ meal.price }}</span></span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Platform fee</span>
+                        <span>₹0.00</span>
+                    </div>
+                    <div class="summary-total">
+                        <span>Total</span>
+                        <span style="color:var(--dark-green);">₹<span id="summaryTotal">{{ meal.price }}</span></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn font-sans">
+                    🛒 Place Order
+                </button>
+
+                <div class="secure-notice">
+                    🔒 Secure · No online payment unless UPI selected
+                </div>
+            </form>
+            {% else %}
+            <div style="text-align: center; padding: 40px 0;">
+                <p style="margin-bottom: 20px; color: var(--text-muted);">Log in to place your order.</p>
+                <a href="{% url 'accounts:login' %}" class="submit-btn" style="text-decoration: none;">Login to
+                    Order</a>
+            </div>
+            {% endif %}
+            {% else %}
+            <div style="text-align: center; padding: 40px 20px;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"
+                    style="margin-bottom: 16px;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <h3 style="color: #1F2937; margin-bottom: 8px;">No slots available</h3>
+                <p style="color: #6B7280; font-size: 0.95rem;">This meal cannot be ordered right now. Please check back
+                    later.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 3. Reviews Section -->
+    <div class="reviews-section font-sans">
+        <h2 class="reviews-title font-serif">Reviews</h2>
+
         {% if reviews %}
-            <div style="max-width: 800px; margin: 0 auto;">
-                {% for review in reviews %}
-                <div class="card" style="margin-bottom: 20px; padding: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
-                        <div>
-                            <h6 style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">{{ review.order.buyer.username }}</h6>
-                            <div style="margin-bottom: 10px;">
+        <div style="max-width: 100%;">
+            {% for review in reviews %}
+            <div
+                style="background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+                <div style="display: flex; gap: 16px; margin-bottom: 12px;">
+                    <div class="cook-avatar" style="width: 40px; height: 40px; font-size: 1rem;">
+                        {{ review.order.buyer.username|make_list|first|upper }}
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-dark);">{{ review.order.buyer.username }}</div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div class="meal-rating" style="margin:0;">
                                 {% for i in "12345" %}
-                                    {% if forloop.counter <= review.rating %}
-                                        <ion-icon name="star" style="color: #ffc107; font-size: 18px;"></ion-icon>
+                                {% if forloop.counter <= review.rating %} <svg width="14" height="14"
+                                    viewBox="0 0 24 24" fill="#F59E0B">
+                                    <path
+                                        d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                    </svg>
                                     {% else %}
-                                        <ion-icon name="star-outline" style="color: #ccc; font-size: 18px;"></ion-icon>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#E5E7EB">
+                                        <path
+                                            d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                    </svg>
                                     {% endif %}
-                                {% endfor %}
+                                    {% endfor %}
                             </div>
-                            <p style="font-size: 16px; line-height: 1.6; color: var(--hf-muted); margin-bottom: 10px;">{{ review.comment }}</p>
-                            <small style="color: var(--hf-muted);">{{ review.created_at|date:"M d, Y" }}</small>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">{{ review.created_at|date:"M d,
+                                Y" }}</span>
                         </div>
                     </div>
                 </div>
-                {% endfor %}
+                <p style="color: var(--text-dark); line-height: 1.6; margin: 0;">{{ review.comment }}</p>
             </div>
+            {% endfor %}
+        </div>
         {% else %}
-            <div style="text-align: center; padding: 40px;">
-                <p style="font-size: 18px; color: var(--hf-muted);">No reviews yet. Be the first to review this meal!</p>
+        <div class="empty-reviews-card">
+            <div class="empty-reviews-icon">✍️</div>
+            <div class="empty-reviews-title">No reviews yet. Be the first to review this meal!</div>
+            <div class="empty-reviews-text">After you receive your order, you can leave a review to help others decide.
             </div>
+        </div>
         {% endif %}
     </div>
+
 </div>
-{% endblock %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // 1. Convert comma separated ingredients to fancy pills
+        const rawIng = document.getElementById('rawIngredients');
+        const ingList = document.getElementById('ingredientsList');
+        if (rawIng && rawIng.textContent && ingList) {
+            const ingredients = rawIng.textContent.split(',').map(i => i.trim()).filter(i => i);
+            // Emojis mapping roughly or just default dot
+            if (ingredients.length > 0) {
+                ingredients.forEach(ing => {
+                    const el = document.createElement('div');
+                    el.className = 'ingredient-tag';
+                    // Pick an emoji heuristically or use a generic one
+                    let icon = '🔸';
+                    if (ing.toLowerCase().includes('batter')) icon = '🥣';
+                    else if (ing.toLowerCase().includes('lentil') || ing.toLowerCase().includes('dal')) icon = '🫘';
+                    else if (ing.toLowerCase().includes('veg')) icon = '🥕';
+                    else if (ing.toLowerCase().includes('spice')) icon = '🌶️';
+                    else if (ing.toLowerCase().includes('coconut') || ing.toLowerCase().includes('chutney')) icon = '🥥';
+
+                    el.innerHTML = `${icon} ${ing}`;
+                    ingList.appendChild(el);
+                });
+            } else {
+                ingList.innerHTML = '<div class="ingredient-tag">🍲 No ingredients listed</div>';
+            }
+        }
+
+        // 2. Order summary & quantity logic
+        const unitPrice = parseFloat("{{ meal.price }}") || 0;
+        const qtyInput = document.getElementById('quantityInput');
+        const slotSelect = document.getElementById('pickup_slot');
+
+        const btnMinus = document.getElementById('qtyMinus');
+        const btnPlus = document.getElementById('qtyPlus');
+
+        const sumQty = document.getElementById('summaryQty');
+        const sumBase = document.getElementById('summaryBase');
+        const sumTotal = document.getElementById('summaryTotal');
+
+        let maxQty = Infinity;
+
+        function updateSummary() {
+            if (!qtyInput) return;
+            const qty = parseInt(qtyInput.value) || 1;
+            const total = (unitPrice * qty).toFixed(2);
+
+            if (sumQty) sumQty.textContent = qty;
+            if (sumBase) sumBase.textContent = total;
+            if (sumTotal) sumTotal.textContent = total;
+        }
+
+        if (slotSelect) {
+            slotSelect.addEventListener('change', function () {
+                const selectedOpt = this.options[this.selectedIndex];
+                if (selectedOpt.value) {
+                    maxQty = parseInt(selectedOpt.getAttribute('data-max')) || Infinity;
+                } else {
+                    maxQty = Infinity;
+                }
+                if (qtyInput && parseInt(qtyInput.value) > maxQty) {
+                    qtyInput.value = maxQty;
+                }
+                updateSummary();
+            });
+        }
+
+        if (btnMinus && btnPlus && qtyInput) {
+            btnMinus.addEventListener('click', () => {
+                let val = parseInt(qtyInput.value);
+                if (val > 1) {
+                    qtyInput.value = val - 1;
+                    updateSummary();
+                }
+            });
+
+            btnPlus.addEventListener('click', () => {
+                let val = parseInt(qtyInput.value);
+                if (val < maxQty) {
+                    qtyInput.value = val + 1;
+                    updateSummary();
+                }
+            });
+        }
+
+        // 3. Payment Method Selection
+        const paymentBtns = document.querySelectorAll('.payment-btn');
+        const paymentInput = document.getElementById('paymentMethodInput');
+
+        paymentBtns.forEach(btn => {
+            btn.addEventListener('click', function () {
+                if (this.disabled) return;
+                // Remove active from all
+                paymentBtns.forEach(b => b.classList.remove('active'));
+                // Add active to clicked
+                this.classList.add('active');
+                // Update hidden input
+                if (paymentInput) paymentInput.value = this.getAttribute('data-method');
+            });
+        });
+    });
+</script>

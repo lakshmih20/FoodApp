@@ -1,49 +1,49 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Count, Sum, Avg
+from django.db.models import Count, Sum, Q
 from django.utils import timezone
-from datetime import timedelta
-from apps.accounts.models import User, CookProfile, UserProfile
-from apps.cooks.models import Meal, CookOrder
+from apps.accounts.models import User, CookProfile
+from apps.cooks.models import Meal
 from apps.buyers.models import BuyerOrder
 from apps.payments.models import Payment
+from apps.notifications.models import Notification
+from .models import Report
 
 
-def is_admin(user):
-    """Check if user is admin"""
-    return user.is_authenticated and (user.is_staff or user.user_type == 'admin')
+def _require_staff(request):
+    if not request.user.is_staff:
+        return redirect('buyers:home')
+    return None
 
 
 @login_required
-@user_passes_test(is_admin)
 def dashboard(request):
-    """Admin dashboard"""
-    # Statistics
-    total_users = User.objects.count()
-    total_cooks = CookProfile.objects.count()
-    verified_cooks = CookProfile.objects.count()  # No status field, so just count all
-    pending_verifications = 0
-    
-    # Orders
-    total_orders = BuyerOrder.objects.count()
-    today_orders = BuyerOrder.objects.filter(created_at__date=timezone.now().date()).count()
-    today_revenue = Payment.objects.filter(
-        created_at__date=timezone.now().date(),
-        status='success'
-    ).aggregate(Sum('amount'))['amount__sum'] or 0
+    blocked = _require_staff(request)
+    if blocked:
+        return blocked
 
-    # Recent activities
-    recent_orders = BuyerOrder.objects.order_by('-created_at')[:10]
-    pending_cooks = CookProfile.objects.filter(verification_status='pending').order_by('-created_at')[:5]
+    today = timezone.now().date()
+    total_users = User.objects.filter(user_type='buyer').count()
+    total_cooks = CookProfile.objects.count()
+    verified_cooks = CookProfile.objects.filter(is_verified=True).count()
+    pending_verifications = CookProfile.objects.filter(verification_status='pending').count()
+    today_orders = BuyerOrder.objects.filter(created_at__date=today).count()
+    active_meals = Meal.objects.filter(is_available=True).count()
+    today_revenue = Payment.objects.filter(created_at__date=today, status='success').aggregate(
+        total=Sum('amount')
+    )['total'] or 0
+
+    recent_orders = BuyerOrder.objects.select_related('buyer', 'cook__user').order_by('-created_at')[:10]
+    pending_cooks = CookProfile.objects.select_related('user').filter(verification_status='pending').order_by('-created_at')[:10]
 
     context = {
         'total_users': total_users,
         'total_cooks': total_cooks,
         'verified_cooks': verified_cooks,
         'pending_verifications': pending_verifications,
-        'total_orders': total_orders,
         'today_orders': today_orders,
+        'active_meals': active_meals,
         'today_revenue': today_revenue,
         'recent_orders': recent_orders,
         'pending_cooks': pending_cooks,
@@ -51,118 +51,192 @@ def dashboard(request):
     return render(request, 'admin_panel/dashboard.html', context)
 
 
-
 @login_required
-@user_passes_test(is_admin)
 def cook_verification_list(request):
-    """List cooks pending verification"""
-    pending_cooks = CookProfile.objects.filter(verification_status='pending').order_by('-created_at')
+    blocked = _require_staff(request)
+    if blocked:
+        return blocked
+    pending_cooks = CookProfile.objects.select_related('user').filter(verification_status='pending').order_by('-created_at')
     return render(request, 'admin_panel/cook_verification_list.html', {'pending_cooks': pending_cooks})
 
 
+@login_required
+def cook_verification_review(request, cook_id):
+    blocked = _require_staff(request)
+    if blocked:
+        return blocked
+    cook = get_object_or_404(CookProfile.objects.select_related('user'), pk=cook_id)
+    return render(request, 'admin_panel/cook_review.html', {'cook': cook})
+
 
 @login_required
-@user_passes_test(is_admin)
 def verify_cook(request, cook_id):
-    """Approve cook verification"""
+    blocked = _require_staff(request)
+    if blocked:
+        return blocked
+    if request.method != 'POST':
+        messages.info(request, 'Please review the FSSAI certificate before approving.')
+        return redirect('admin_panel:cook_verification_review', cook_id=cook_id)
+
     cook = get_object_or_404(CookProfile, pk=cook_id)
-    cook.verification_status = 'approved'
+    if not cook.fssai_certificate:
+        messages.error(request, 'Cannot verify cook without an uploaded FSSAI certificate.')
+        return redirect('admin_panel:cook_verification_review', cook_id=cook_id)
+
+    cook.is_verified = True
+    cook.verification_status = 'verified'
     cook.fssai_certificate_status = 'approved'
     cook.certificate_verification_date = timezone.now()
-    cook.save()
-    messages.success(request, f'Cook {cook.user.username} has been FSSAI verified.')
-    return redirect('admin_panel:cook_verification_list')
+    cook.certificate_rejection_reason = ''
+    cook.save(update_fields=[
+        'is_verified',
+        'verification_status',
+        'fssai_certificate_status',
+        'certificate_verification_date',
+        'certificate_rejection_reason',
+    ])
+    Notification.objects.create(
+        user=cook.user,
+        message='Congratulations! Your profile has been verified. You can now publish meals.'
+    )
+    messages.success(request, f'{cook.user.username} verified.')
+    next_url = request.POST.get('next')
+    return redirect(next_url or 'admin_panel:cook_verification_list')
 
 
 @login_required
-@user_passes_test(is_admin)
 def reject_cook(request, cook_id):
-    """Reject cook verification"""
+    blocked = _require_staff(request)
+    if blocked:
+        return blocked
+    if request.method != 'POST':
+        messages.info(request, 'Please review the FSSAI certificate before rejecting.')
+        return redirect('admin_panel:cook_verification_review', cook_id=cook_id)
+
     cook = get_object_or_404(CookProfile, pk=cook_id)
-    cook.save()
-    messages.success(request, f'Cook {cook.user.username} FSSAI verification has been rejected.')
-    return redirect('admin_panel:cook_verification_list')
+    cook.is_verified = False
+    cook.verification_status = 'rejected'
+    cook.fssai_certificate_status = 'rejected'
+    cook.certificate_verification_date = timezone.now()
+    cook.certificate_rejection_reason = request.POST.get('rejection_reason', '').strip()
+    cook.save(update_fields=[
+        'is_verified',
+        'verification_status',
+        'fssai_certificate_status',
+        'certificate_verification_date',
+        'certificate_rejection_reason',
+    ])
+    Notification.objects.create(
+        user=cook.user,
+        message='Your FSSAI certificate was rejected. Please upload a valid certificate and resubmit for verification.'
+    )
+    messages.warning(request, f'{cook.user.username} rejected.')
+    next_url = request.POST.get('next')
+    return redirect(next_url or 'admin_panel:cook_verification_list')
+
 
 @login_required
-@user_passes_test(is_admin)
 def user_list(request):
-    """List all users"""
-    users = User.objects.all().order_by('-date_joined')
-    
-    # Filter by type
-    user_type = request.GET.get('type')
-    if user_type:
-        users = users.filter(user_type=user_type)
-    
-    return render(request, 'admin_panel/user_list.html', {'users': users, 'user_type_filter': user_type})
+    blocked = _require_staff(request)
+    if blocked:
+        return blocked
+
+    buyers = User.objects.filter(user_type='buyer').annotate(total_orders=Count('buyer_orders')).order_by('-date_joined')
+    cooks = User.objects.filter(user_type='cook').annotate(total_meals=Count('cook_profile__meals')).order_by('-date_joined')
+    tab = request.GET.get('tab', 'buyers')
+    return render(request, 'admin_panel/user_list.html', {
+        'buyers': buyers,
+        'cooks': cooks,
+        'tab': tab,
+    })
 
 
 @login_required
-@user_passes_test(is_admin)
+def toggle_user_active(request, user_id):
+    blocked = _require_staff(request)
+    if blocked:
+        return blocked
+    user = get_object_or_404(User, pk=user_id)
+    user.is_active = not user.is_active
+    user.save(update_fields=['is_active'])
+    messages.success(request, f'User {user.username} is now {"active" if user.is_active else "inactive"}.')
+    return redirect('admin_panel:user_list')
+
+
+@login_required
 def order_list(request):
-    """List all orders"""
-    orders = BuyerOrder.objects.all().order_by('-created_at')
-    
-    # Filter by status
-    status_filter = request.GET.get('status')
+    blocked = _require_staff(request)
+    if blocked:
+        return blocked
+    status_filter = request.GET.get('status', '').strip()
+    query = request.GET.get('q', '').strip()
+    orders = BuyerOrder.objects.select_related('buyer', 'cook__user', 'meal').order_by('-created_at')
+
     if status_filter:
-        orders = orders.filter(status=status_filter)
-    
-    return render(request, 'admin_panel/order_list.html', {'orders': orders, 'status_filter': status_filter})
+        if status_filter == 'collected':
+            orders = orders.filter(status='completed')
+        else:
+            orders = orders.filter(status=status_filter)
+
+    if query:
+        if query.isdigit():
+            orders = orders.filter(Q(id=int(query)) | Q(buyer__username__icontains=query))
+        else:
+            orders = orders.filter(buyer__username__icontains=query)
+
+    return render(request, 'admin_panel/order_list.html', {
+        'orders': orders,
+        'status_filter': status_filter,
+        'query': query,
+    })
 
 
 @login_required
-@user_passes_test(is_admin)
 def dispute_list(request):
-    """List disputes and complaints"""
-    # This would typically come from a Dispute model
-    # For now, we'll show cancelled orders as disputes
-    disputes = BuyerOrder.objects.filter(status='cancelled').order_by('-created_at')
-    return render(request, 'admin_panel/dispute_list.html', {'disputes': disputes})
+    blocked = _require_staff(request)
+    if blocked:
+        return blocked
+    reports = Report.objects.select_related('buyer', 'cook__user', 'order').order_by('-created_at')
+    return render(request, 'admin_panel/dispute_list.html', {'reports': reports})
 
 
 @login_required
-@user_passes_test(is_admin)
-def analytics(request):
-    """Platform-wide analytics"""
-    # Date range
-    end_date = timezone.now().date()
-    start_date = end_date - timedelta(days=30)
-    
-    # Revenue trends from payments
-    daily_revenue = Payment.objects.filter(
-        created_at__date__range=[start_date, end_date],
-        status='success'
-    ).extra(
-        select={'day': 'DATE(created_at)'}
-    ).values('day').annotate(
-        revenue=Sum('amount')
-    ).order_by('day')
-    
-    # Order trends
-    daily_orders = BuyerOrder.objects.filter(
-        created_at__date__range=[start_date, end_date]
-    ).extra(
-        select={'day': 'DATE(created_at)'}
-    ).values('day').annotate(
-        count=Count('id')
-    ).order_by('day')
-    
-    # Top cooks
-    top_cooks = CookProfile.objects.annotate(
-        order_count=Count('buyer_orders')
-    ).order_by('-order_count')[:10]
-    
-    # Top meals
-    top_meals = Meal.objects.annotate(
-        order_count=Count('orders')
-    ).order_by('-order_count')[:10]
-    
-    context = {
-        'daily_revenue': daily_revenue,
-        'daily_orders': daily_orders,
-        'top_cooks': top_cooks,
-        'top_meals': top_meals,
-    }
-    return render(request, 'admin_panel/analytics.html', context)
+def resolve_dispute(request, report_id):
+    blocked = _require_staff(request)
+    if blocked:
+        return blocked
+    report = get_object_or_404(Report, pk=report_id)
+    if request.method == 'POST':
+        report.status = 'resolved'
+        report.admin_note = request.POST.get('admin_note', '').strip()
+        report.save(update_fields=['status', 'admin_note', 'updated_at'])
+        messages.success(request, f'Report #{report.id} resolved.')
+    return redirect('admin_panel:dispute_list')
+
+
+@login_required
+def meal_list(request):
+    blocked = _require_staff(request)
+    if blocked:
+        return blocked
+    meals = Meal.objects.select_related('cook__user').prefetch_related('images').order_by('-created_at')
+    return render(request, 'admin_panel/meal_list.html', {'meals': meals})
+
+
+@login_required
+def toggle_meal_publish(request, meal_id):
+    blocked = _require_staff(request)
+    if blocked:
+        return blocked
+    meal = get_object_or_404(Meal, pk=meal_id)
+    meal.is_available = not meal.is_available
+    meal.save(update_fields=['is_available'])
+    if meal.is_available:
+        msg = f'Your meal {meal.name} is live again.'
+        messages.success(request, f'{meal.name} republished.')
+    else:
+        msg = f'Your meal {meal.name} has been unpublished by admin due to compliance issues. Please contact support for more information.'
+        messages.warning(request, f'{meal.name} unpublished.')
+    Notification.objects.create(user=meal.cook.user, message=msg)
+    return redirect('admin_panel:meal_list')
 
